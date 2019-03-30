@@ -5,8 +5,8 @@ Homebridge plugin to control Worx Landroid robo mowers through the Worx Cloud
  - Start mower
  - Return mower to home
  - Mowing status (on / off)
+ - Battery Status
  - Error status
- - Battery Status (Ask Siri, the Home app doesn't show battery for switches)
 
 ## Example config
 ```
