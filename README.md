@@ -31,6 +31,7 @@ Homebridge plugin to control Worx Landroid robo mowers through the Worx Cloud
     }
   ]
 }
+```
 
 ### Options:
  - `name` Name for your Landroid to appear in HomeKit
