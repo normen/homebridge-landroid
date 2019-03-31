@@ -84,7 +84,7 @@ LandroidAccessory.prototype.landroidUpdate = function(data) {
     }
     if(this.dataset.statusCode != oldDataset.statusCode){
       this.log(this.name + " status changed to " + this.dataset.statusCode + " (" + this.dataset.statusDescription + ")");
-      if(isOn(oldDataset.statusCode)){
+      if(isOn(this.dataset.statusCode)){
         this.service.getCharacteristic(Characteristic.On).updateValue(true);
       }else{
         this.service.getCharacteristic(Characteristic.On).updateValue(false);
@@ -140,7 +140,7 @@ LandroidAccessory.prototype.sendMessage = function(cmd, params) {
 }
 
 function isOn(c){
-  if(c == 2 || c == 3 || c == 4 || c == 5 || c == 6 || c == 7 || c == 32 || c == 33){
+  if(c == 2 || c == 3 || c == 4 || c == 6 || c == 7 || c == 32 || c == 33){
     return true;
   }else{
     return false;
