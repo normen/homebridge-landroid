@@ -73,7 +73,7 @@ LandroidAccessory.prototype.landroidUpdate = function(data) {
       this.batteryService.getCharacteristic(Characteristic.BatteryLevel).updateValue(this.dataset.batteryLevel);
     }
     if(this.dataset.batteryCharging != oldDataset.batteryCharging){
-      this.batteryService.getCharacteristic(Characteristic.ChargingState).updateValue(this.dataset.batteryCharging);
+      this.batteryService.getCharacteristic(Characteristic.ChargingState).updateValue(this.dataset.batteryCharging?Characteristic.ChargingState.CHARGING:Characteristic.ChargingState.NOT_CHARGING);
     }
     if(this.dataset.statusCode != oldDataset.statusCode){
       if(isOn(oldDataset.statusCode)){
@@ -97,7 +97,7 @@ LandroidAccessory.prototype.getBatteryLevel = function(callback) {
   callback(null, this.dataset.batteryLevel);
 }
 LandroidAccessory.prototype.getChargingState = function(callback) {
-  callback(null, this.dataset.batteryCharging);
+  callback(null, this.dataset.batteryCharging?Characteristic.ChargingState.CHARGING:Characteristic.ChargingState.NOT_CHARGING);
 }
 LandroidAccessory.prototype.getOn = function(callback) {
   if(isOn(this.dataset.statusCode)){
@@ -128,7 +128,7 @@ LandroidAccessory.prototype.sendMessage = function(cmd, params) {
 }
 
 function isOn(c){
-  if(c == 2 || c == 3 || c == 4 || c == 5 || c == 6 || c == 7 || c == 30 || c == 32 || c == 33){
+  if(c == 2 || c == 3 || c == 4 || c == 5 || c == 6 || c == 7 || c == 32 || c == 33){
     return true;
   }else{
     return false;
