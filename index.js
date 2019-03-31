@@ -22,9 +22,11 @@ function LandroidAccessory(config, log) {
     self.config = config;
     self.name = config.name;
     self.config.enable = true;
+    self.firstUpdate = false;
 
     self.landroidAdapter = {"log": new LandroidLogger(log),
-                            "config": config};
+                            "config": config,
+                            "setState": function(id,val,ack){}};
 
     self.dataset = new LandroidDataset();
     self.dataset.batteryLevel = 0;
@@ -54,15 +56,15 @@ LandroidAccessory.prototype.getServices = function() {
     var self = this;
     var services = [];
 
-    var service = new Service.AccessoryInformation();
-    service.setCharacteristic(Characteristic.Name, self.name)
+    self.infoService = new Service.AccessoryInformation();
+    self.infoService.setCharacteristic(Characteristic.Name, self.name)
     .setCharacteristic(Characteristic.Manufacturer, 'Worx')
     .setCharacteristic(Characteristic.Model, 'Landroid')
     .setCharacteristic(Characteristic.SerialNumber, 'xxx')
     .setCharacteristic(Characteristic.FirmwareRevision, process.env.version)
     .setCharacteristic(Characteristic.HardwareRevision, '1.0.0');
 
-    services.push(service);
+    services.push(self.infoService);
     services.push(self.service);
     services.push(self.batteryService);
     services.push(self.contactService);
@@ -88,6 +90,9 @@ LandroidAccessory.prototype.landroidUpdate = function(data) {
     if(this.dataset.errorCode != oldDataset.errorCode){
       this.contactService.getCharacteristic(Characteristic.ContactSensorState).updateValue(this.dataset.errorCode != 0?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
     }
+  }
+  if(!this.firstUpdate){
+    this.firstUpdate = true;
   }
 }
 LandroidAccessory.prototype.getContactSensorState = function(callback) {
