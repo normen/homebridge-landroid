@@ -75,12 +75,15 @@ LandroidAccessory.prototype.landroidUpdate = function(data) {
     let oldDataset = this.dataset;
     this.dataset = new LandroidDataset(data);
     if(this.dataset.batteryLevel != oldDataset.batteryLevel){
+      this.log(this.name + " battery level changed to " + this.dataset.batteryLevel);
       this.batteryService.getCharacteristic(Characteristic.BatteryLevel).updateValue(this.dataset.batteryLevel);
     }
     if(this.dataset.batteryCharging != oldDataset.batteryCharging){
+      this.log(this.name + " charging status changed to " + this.dataset.batteryCharging);
       this.batteryService.getCharacteristic(Characteristic.ChargingState).updateValue(this.dataset.batteryCharging?Characteristic.ChargingState.CHARGING:Characteristic.ChargingState.NOT_CHARGING);
     }
     if(this.dataset.statusCode != oldDataset.statusCode){
+      this.log(this.name + " status changed to " + this.dataset.statusCode + " (" + this.dataset.statusDescription + ")");
       if(isOn(oldDataset.statusCode)){
         this.service.getCharacteristic(Characteristic.On).updateValue(true);
       }else{
@@ -88,6 +91,7 @@ LandroidAccessory.prototype.landroidUpdate = function(data) {
       }
     }
     if(this.dataset.errorCode != oldDataset.errorCode){
+      this.log(this.name + " error code changed to " + this.dataset.errorCode + " (" + this.dataset.errorDescription + ")");
       this.contactService.getCharacteristic(Characteristic.ContactSensorState).updateValue(this.dataset.errorCode != 0?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
     }
   }
