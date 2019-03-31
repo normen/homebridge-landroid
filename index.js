@@ -37,12 +37,14 @@ function LandroidAccessory(config, log) {
     self.service.getCharacteristic(Characteristic.On).on('get', self.getOn.bind(self));
     self.service.getCharacteristic(Characteristic.On).on('set', self.setOn.bind(self));
 
-    self.service.getCharacteristic(Characteristic.StatusFault).on('get', this.getStatusFault.bind(self));
 
     self.batteryService = new Service.BatteryService();
     self.batteryService.getCharacteristic(Characteristic.BatteryLevel).on('get', self.getBatteryLevel.bind(self));
     self.batteryService.getCharacteristic(Characteristic.StatusLowBattery).on('get', this.getStatusLowBattery.bind(self));
     self.batteryService.getCharacteristic(Characteristic.ChargingState).on('get', this.getChargingState.bind(self));
+
+    self.contactService = new Service.ContactSensor(self.name+" Issue");
+    self.contactService.getCharacteristic(Characteristic.ContactSensorState).on('get', self.getContactSensorState.bind(self));
 
     self.landroidCloud = new LandroidCloud(self.landroidAdapter);
     self.landroidCloud.init(self.landroidUpdate.bind(self));
@@ -63,6 +65,7 @@ LandroidAccessory.prototype.getServices = function() {
     services.push(service);
     services.push(self.service);
     services.push(self.batteryService);
+    services.push(self.contactService);
     return services;
 }
 LandroidAccessory.prototype.landroidUpdate = function(data) {
@@ -77,21 +80,18 @@ LandroidAccessory.prototype.landroidUpdate = function(data) {
     }
     if(this.dataset.statusCode != oldDataset.statusCode){
       if(isOn(oldDataset.statusCode)){
-        this.service.getCharacteristic(Characteristic.On).updateValue(1);
+        this.service.getCharacteristic(Characteristic.On).updateValue(true);
       }else{
-        this.service.getCharacteristic(Characteristic.On).updateValue(0);
+        this.service.getCharacteristic(Characteristic.On).updateValue(false);
       }
     }
     if(this.dataset.errorCode != oldDataset.errorCode){
-      this.service.getCharacteristic(Characteristic.StatusFault).updateValue(this.dataset.errorCode);
+      this.contactService.getCharacteristic(Characteristic.ContactSensorState).updateValue(this.dataset.errorCode != 0?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
     }
   }
 }
-LandroidAccessory.prototype.getStatusLowBattery = function(callback) {
-  callback(null, this.dataset.errorCode == 12);
-}
-LandroidAccessory.prototype.getStatusFault = function(callback) {
-  callback(null, this.dataset.errorCode);
+LandroidAccessory.prototype.getContactSensorState = function(callback) {
+  callback(null,  this.dataset.errorCode != 0?Characteristic.StatusFault.CONTACT_NOT_DETECTED:Characteristic.StatusFault.CONTACT_DETECTED);
 }
 LandroidAccessory.prototype.getBatteryLevel = function(callback) {
   callback(null, this.dataset.batteryLevel);
@@ -99,18 +99,21 @@ LandroidAccessory.prototype.getBatteryLevel = function(callback) {
 LandroidAccessory.prototype.getChargingState = function(callback) {
   callback(null, this.dataset.batteryCharging?Characteristic.ChargingState.CHARGING:Characteristic.ChargingState.NOT_CHARGING);
 }
+LandroidAccessory.prototype.getStatusLowBattery = function(callback) {
+  callback(null, this.dataset.errorCode == 12?Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW:Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
+}
 LandroidAccessory.prototype.getOn = function(callback) {
   if(isOn(this.dataset.statusCode)){
-    callback(null, 1);
+    callback(null, true);
   }else{
-    callback(null, 0);
+    callback(null, false);
   }
 }
 LandroidAccessory.prototype.setOn = function(state, callback) {
   if(state){
-    self.sendMessage(1);
+    this.sendMessage(1);
   }else{
-    self.sendMessage(3);
+    this.sendMessage(3);
   }
   callback(null);
 }
@@ -132,6 +135,15 @@ function isOn(c){
     return true;
   }else{
     return false;
+  }
+}
+
+function isError(c){
+  //no error and rain delay is "not an error"
+  if(c == 0 || c == 5){
+    return false;
+  }else{
+    return true;
   }
 }
 
