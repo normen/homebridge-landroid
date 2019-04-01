@@ -3,71 +3,66 @@ var LandroidCloud = require('iobroker.landroid-s/lib/mqttCloud')
 var LandroidDataset = require("./LandroidDataset");
 
 function LandroidPlatform(log, config) {
-    var self = this;
-    self.config = config;
-    self.log = log;
+    this.config = config;
+    this.log = log;
 }
 LandroidPlatform.prototype.accessories = function(callback) {
     var self = this;
-    self.accessories = [];
-    self.config.landroids.forEach(function(mower) {
+    this.accessories = [];
+    this.config.landroids.forEach(function(mower) {
         self.accessories.push(new LandroidAccessory(mower, self.log));
     });
-    callback(self.accessories);
+    callback(this.accessories);
 }
 
 function LandroidAccessory(config, log) {
-    let self = this;
-    self.log = log;
-    self.config = config;
-    self.name = config.name;
-    self.config.enable = true;
-    self.firstUpdate = false;
+    this.log = log;
+    this.config = config;
+    this.name = config.name;
+    this.config.enable = true;
+    this.firstUpdate = false;
 
-    self.landroidAdapter = {"log": new LandroidLogger(log),
+    this.landroidAdapter = {"log": new LandroidLogger(log),
                             "config": config,
                             "setState": function(id,val,ack){}};
 
-    self.dataset = new LandroidDataset();
-    self.dataset.batteryLevel = 0;
-    self.dataset.batteryCharging = false;
-    self.dataset.statusCode = 0;
-    self.dataset.errorCode = 0;
+    this.dataset = new LandroidDataset();
+    this.dataset.batteryLevel = 0;
+    this.dataset.batteryCharging = false;
+    this.dataset.statusCode = 0;
+    this.dataset.errorCode = 0;
 
-    self.service = new Service.Switch(self.name);
+    this.service = new Service.Switch(this.name);
+    this.service.getCharacteristic(Characteristic.On).on('get', this.getOn.bind(this));
+    this.service.getCharacteristic(Characteristic.On).on('set', this.setOn.bind(this));
 
-    self.service.getCharacteristic(Characteristic.On).on('get', self.getOn.bind(self));
-    self.service.getCharacteristic(Characteristic.On).on('set', self.setOn.bind(self));
+    this.batteryService = new Service.BatteryService();
+    this.batteryService.getCharacteristic(Characteristic.BatteryLevel).on('get', this.getBatteryLevel.bind(this));
+    this.batteryService.getCharacteristic(Characteristic.StatusLowBattery).on('get', this.getStatusLowBattery.bind(this));
+    this.batteryService.getCharacteristic(Characteristic.ChargingState).on('get', this.getChargingState.bind(this));
 
+    this.contactService = new Service.ContactSensor(this.name+" Issue");
+    this.contactService.getCharacteristic(Characteristic.ContactSensorState).on('get', this.getContactSensorState.bind(this));
 
-    self.batteryService = new Service.BatteryService();
-    self.batteryService.getCharacteristic(Characteristic.BatteryLevel).on('get', self.getBatteryLevel.bind(self));
-    self.batteryService.getCharacteristic(Characteristic.StatusLowBattery).on('get', this.getStatusLowBattery.bind(self));
-    self.batteryService.getCharacteristic(Characteristic.ChargingState).on('get', this.getChargingState.bind(self));
-
-    self.contactService = new Service.ContactSensor(self.name+" Issue");
-    self.contactService.getCharacteristic(Characteristic.ContactSensorState).on('get', self.getContactSensorState.bind(self));
-
-    self.landroidCloud = new LandroidCloud(self.landroidAdapter);
-    self.landroidCloud.init(self.landroidUpdate.bind(self));
+    this.landroidCloud = new LandroidCloud(this.landroidAdapter);
+    this.landroidCloud.init(this.landroidUpdate.bind(this));
 }
 
 LandroidAccessory.prototype.getServices = function() {
-    var self = this;
     var services = [];
 
-    self.infoService = new Service.AccessoryInformation();
-    self.infoService.setCharacteristic(Characteristic.Name, self.name)
+    this.infoService = new Service.AccessoryInformation();
+    this.infoService.setCharacteristic(Characteristic.Name, this.name)
     .setCharacteristic(Characteristic.Manufacturer, 'Worx')
     .setCharacteristic(Characteristic.Model, 'Landroid')
     .setCharacteristic(Characteristic.SerialNumber, 'xxx')
     .setCharacteristic(Characteristic.FirmwareRevision, process.env.version)
     .setCharacteristic(Characteristic.HardwareRevision, '1.0.0');
 
-    services.push(self.infoService);
-    services.push(self.service);
-    services.push(self.batteryService);
-    services.push(self.contactService);
+    services.push(this.infoService);
+    services.push(this.service);
+    services.push(this.batteryService);
+    services.push(this.contactService);
     return services;
 }
 LandroidAccessory.prototype.landroidUpdate = function(data) {
