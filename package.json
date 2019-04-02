@@ -1,10 +1,9 @@
 {
   "name": "homebridge-landroid",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "HomeBridge plugin for Worx Landroid lawnmowers",
   "main": "index.js",
-  "scripts": {
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/normen/homebridge-landroid.git"

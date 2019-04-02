@@ -1,5 +1,5 @@
 var Service, Characteristic;
-var LandroidCloud = require('iobroker.landroid-s/lib/mqttCloud')
+var LandroidCloud = require('iobroker.landroid-s/lib/mqttCloud');
 var LandroidDataset = require("./LandroidDataset");
 
 function LandroidPlatform(log, config) {
@@ -95,7 +95,7 @@ LandroidAccessory.prototype.landroidUpdate = function(data) {
   }
 }
 LandroidAccessory.prototype.getContactSensorState = function(callback) {
-  callback(null,  this.dataset.errorCode != 0?Characteristic.StatusFault.CONTACT_NOT_DETECTED:Characteristic.StatusFault.CONTACT_DETECTED);
+  callback(null,  this.dataset.errorCode != 0?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
 }
 LandroidAccessory.prototype.getBatteryLevel = function(callback) {
   callback(null, this.dataset.batteryLevel);
