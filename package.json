@@ -1,6 +1,6 @@
 {
   "name": "homebridge-landroid",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "HomeBridge plugin for Worx Landroid lawnmowers",
   "main": "index.js",
   "scripts": {},
@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/normen/homebridge-landroid#readme",
   "dependencies": {
-    "iobroker.landroid-s": "^2.5.4",
+    "iobroker.landroid-s": "^2.5.5",
     "moment": "^2.24.0"
   },
   "engines": {
