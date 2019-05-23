@@ -45,13 +45,13 @@ Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud
  - `dev_sel` device number if you have more than one Landroid, default `0`
 
 ## Usage
- The mower will appear as a switch and a contact sensor in HomeKit.
+The mower will appear as a switch and a occupancy sensor in HomeKit.
 
 #### On/Off Switch
 The switch shows the current status and allows to control the mower. If the switch is off the mower is either on the home base or on its way to the home base. If it's on the mower is currently mowing. Turn the switch on to start the mowing cycle, turn it off to send the mower back home.
 
-#### Contact Sensor
-The contact sensor is used to dipsplay issues with the mower (trapped, outside wire etc.), when the contact sensor is "open" there is some issue that prevents the mower from continuing. Fix the issue to control the mower again.
+#### Occupancy Sensor
+The occupancy sensor is used to dipsplay issues with the mower (trapped, outside wire etc.), when the occupancy sensor is "detected" there is some issue that prevents the mower from continuing. Fix the issue to control the mower again.
 
 #### Battery Status
-You can see the battery status in the settings of either the switch or contact sensor in the Home app and you can ask Siri about the battery status of your lawn mower.
+You can see the battery status in the settings of either the switch or occupancy sensor in the Home app and you can ask Siri about the battery status of your lawn mower.
