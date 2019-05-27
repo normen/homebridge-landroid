@@ -19,6 +19,7 @@ function LandroidAccessory(config, log) {
     this.log = log;
     this.config = config;
     this.name = config.name;
+    this.issue = config.issue || "contact";
     this.config.enable = true;
     this.firstUpdate = false;
 
@@ -41,8 +42,14 @@ function LandroidAccessory(config, log) {
     this.batteryService.getCharacteristic(Characteristic.StatusLowBattery).on('get', this.getStatusLowBattery.bind(this));
     this.batteryService.getCharacteristic(Characteristic.ChargingState).on('get', this.getChargingState.bind(this));
 
-    this.occupancyService = new Service.OccupancySensor(this.name+" Issue");
-    this.occupancyService.getCharacteristic(Characteristic.OccupancyDetected).on('get', this.getOccupancyDetected.bind(this));
+    if(this.issue == "contact"){
+      this.issueService = new Service.ContactSensor(this.name+" Issue");
+      this.issueService.getCharacteristic(Characteristic.ContactSensorState).on('get', this.getIssue.bind(this));
+    }
+    if(this.issue == "occupancy"){
+      this.issueService = new Service.OccupancySensor(this.name+" Issue");
+      this.issueService.getCharacteristic(Characteristic.OccupancyDetected).on('get', this.getIssue.bind(this));
+    }
 
     this.landroidCloud = new LandroidCloud(this.landroidAdapter);
     this.landroidCloud.init(this.landroidUpdate.bind(this));
@@ -62,7 +69,7 @@ LandroidAccessory.prototype.getServices = function() {
     services.push(this.infoService);
     services.push(this.service);
     services.push(this.batteryService);
-    services.push(this.occupancyService);
+    services.push(this.issueService);
     return services;
 }
 LandroidAccessory.prototype.landroidUpdate = function(data) {
@@ -87,15 +94,25 @@ LandroidAccessory.prototype.landroidUpdate = function(data) {
     }
     if(this.dataset.errorCode != oldDataset.errorCode){
       this.log(this.name + " error code changed to " + this.dataset.errorCode + " (" + this.dataset.errorDescription + ")");
-      this.occupancyService.getCharacteristic(Characteristic.OccupancyDetected).updateValue(this.dataset.errorCode != 0?Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED:Characteristic.OccupancyDetected.OCCUPANCY_DETECTED);
+      if(this.issue == "contact"){
+        this.issueService.getCharacteristic(Characteristic.ContactSensorState).updateValue(this.dataset.errorCode != 0?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
+      }
+      if(this.issue == "occupancy"){
+        this.issueService.getCharacteristic(Characteristic.OccupancyDetected).updateValue(this.dataset.errorCode != 0?Characteristic.OccupancyDetected.OCCUPANCY_DETECTED:Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
+      }
     }
   }
   if(!this.firstUpdate){
     this.firstUpdate = true;
   }
 }
-LandroidAccessory.prototype.getOccupancyDetected = function(callback) {
-  callback(null,  this.dataset.errorCode != 0?Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED:Characteristic.OccupancyDetected.OCCUPANCY_DETECTED);
+LandroidAccessory.prototype.getIssue = function(callback) {
+  if(this.issue == "contact"){
+    callback(null,  this.dataset.errorCode != 0?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
+  }
+  if(this.issue == "occupancy"){
+    callback(null,  this.dataset.errorCode != 0?Characteristic.OccupancyDetected.OCCUPANCY_DETECTED:Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
+  }
 }
 LandroidAccessory.prototype.getBatteryLevel = function(callback) {
   callback(null, this.dataset.batteryLevel);
