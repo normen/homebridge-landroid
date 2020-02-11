@@ -1,0 +1,40 @@
+{
+  "pluginAlias": "Landroid",
+  "pluginType": "platform",
+  "footerDisplay": "For documentation please see the https://github.com/normen/homebridge-landroid",
+  "schema": {
+    "landroids":{
+      "title": "Configured Mowers",
+      "type": "array",
+      "items":{
+        "title": "Mower",
+        "type": "object",
+        "properties":{
+          "name":{
+            "title": "Name",
+            "type": "string",
+            "required": true
+          },
+          "email":{
+            "title": "eMail",
+            "description": "the email address of your worx account",
+            "type": "string",
+            "required": true
+          },
+          "pwd":{
+            "title": "Password",
+            "description": "the password of your worx account",
+            "type": "string",
+            "required": true
+          },
+          "dev_sel":{
+            "title": "Selected Mower",
+            "description": "the mower number, default 0 (first mower)",
+            "type": "number",
+            "required": false
+          }
+        }
+      }
+    }
+  }
+}
