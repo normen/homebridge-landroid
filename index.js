@@ -10,6 +10,10 @@ LandroidPlatform.prototype.accessories = function(callback) {
     var self = this;
     this.accessories = [];
     this.config.landroids.forEach(function(mower) {
+        if(!mower.email || !mower.pwd){ //use local or global email/pass
+            mower.email = self.config.email;
+            mower.pwd = self.config.pwd;
+        }
         self.accessories.push(new LandroidAccessory(mower, self.log));
     });
     callback(this.accessories);
