@@ -175,8 +175,8 @@ LandroidAccessory.prototype.sendMessage = function(cmd, params) {
         message = Object.assign(message, params);
     }
     let outMsg = JSON.stringify(message);
-    this.log("Sending to landroid cloud: [" + outMsg + "] (#"+mower.serial+")");
-    this.landroidCloud.sendMessage(outMsg, mower.serial);
+    this.log("Sending to landroid cloud: [" + outMsg + "] (#"+this.serial+")");
+    this.landroidCloud.sendMessage(outMsg, this.serial);
 }
 
 function isOn(c){

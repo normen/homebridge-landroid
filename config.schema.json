@@ -28,24 +28,6 @@
             "type": "string",
             "required": true
           },
-          "email":{
-            "title": "eMail",
-            "description": "WARNING: Deprecated, please move this to global email/pass.",
-            "type": "string",
-            "required": false
-          },
-          "pwd":{
-            "title": "Password",
-            "description": "WARNING: Deprecated, please move this to global email/pass.",
-            "type": "string",
-            "required": false
-          },
-          "dev_sel":{
-            "title": "Selected Mower",
-            "description": "WARNING: Deprecated, please use dev_name instead (usually dev_sel +1)",
-            "type": "number",
-            "required": false
-          },
           "dev_name":{
             "title": "Worx Cloud Name",
             "description": "The mower name as it is configured in the Worx cloud, default \"1\" (first mower)",
@@ -56,16 +38,5 @@
         }
       }
     }
-  },
-  "form": [
-    "email",
-    "pwd",
-    {
-      "key":"landroids",
-      "items":[
-        "landroids[].name",
-        "landroids[].dev_name"
-      ]
-    }
-  ]
+  }
 }
