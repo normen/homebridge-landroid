@@ -1,4 +1,4 @@
-# homebridge-landroid [![NPM Version](https://img.shields.io/npm/v/homebridge-landroid.svg)](https://www.npmjs.com/package/homebridge-landroid) [![Donate](https://img.shields.io/badge/donate-paypal-yellowgreen.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QKRPFAVB6WRW2&source=url)
+# homebridge-landroid [![NPM Version](https://img.shields.io/npm/v/homebridge-landroid.svg)](https://www.npmjs.com/package/homebridge-landroid)
 Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud
 
 ## Features
@@ -25,12 +25,16 @@ Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud
   "platforms": [
     {
       "platform": "Landroid",
+      "email": "my@email.com",
+      "pwd": "my_password",
       "landroids": [
         {
           "name": "My Landroid",
-          "email": "my@email.com",
-          "pwd": "my_password",
-          "dev_sel": 0
+          "dev_name": "1"
+        },
+        {
+          "name": "My Other Landroid",
+          "dev_name": "2"
         }
       ]
     }
@@ -42,7 +46,9 @@ Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud
  - `name` Name for your Landroid to appear in HomeKit
  - `email` eMail for your Worx account
  - `pwd` password for your Worx account
- - `dev_sel` device number if you have more than one Landroid, default `0`
+ - `dev_name` device name, default `"1"`
+   - Only needed if you have more than one Landroid
+   - Worx by default assigns sequential numbers as names
 
 ## Usage
  The mower will appear as a switch and a contact sensor in HomeKit.

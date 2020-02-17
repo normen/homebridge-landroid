@@ -1,36 +1,68 @@
 var Service, Characteristic;
-var LandroidCloud = require('iobroker.landroid-s/lib/mqttCloud');
-var LandroidDataset = require("./LandroidDataset");
+var LandroidCloud = require('iobroker.worx/lib/api');
 
 function LandroidPlatform(log, config) {
     this.config = config;
     this.log = log;
+    if(!config.email || !config.pwd){
+      this.log("WARNING: No account configured, please set email and password of your Worx account in config.json!");
+      // Fallback: get config from first landroid (old config file)
+      if(config.landroids && config.landroids[0]){
+        if(config.landroids[0].email){
+          this.log("WARNING: Per-Landroid email/pass is not supported anymore.");
+          this.log("WARNING: Please update your config.json to use a global email and password in the Landroid platform.");
+          this.log("WARNING: The login data of the first Landroid will be used for the global login for now.");
+          config.email = config.landroids[0].email;
+          config.pwd = config.landroids[0].pwd;
+        }else{
+          return;
+        }
+      }else{
+        return;
+      }
+    }
+
+    this.landroidAdapter = {"log": new LandroidLogger(log)};
+    this.landroidCloud = new LandroidCloud(config.email, config.pwd, this.landroidAdapter);
+    this.landroidCloud.on("mqtt", this.landroidUpdate.bind(this));
+    this.landroidCloud.on("found", this.landroidUpdate.bind(this));
+    this.landroidCloud.on("error", error => {log(error)} );
+    //this.landroidCloud.on("online", online => {console.log(online)} );
+    //this.landroidCloud.on("offline", offline => {console.log(offline)} );
+    this.landroidCloud.on("connect", connect => {log("Connected to WORX cloud.")} );
 }
 LandroidPlatform.prototype.accessories = function(callback) {
     var self = this;
     this.accessories = [];
-    this.config.landroids.forEach(function(mower) {
-        if(!mower.email || !mower.pwd){ //use local or global email/pass
-            mower.email = self.config.email;
-            mower.pwd = self.config.pwd;
-        }
-        self.accessories.push(new LandroidAccessory(mower, self.log));
+    this.config.landroids.forEach(mowerConfig=>{
+        self.accessories.push(new LandroidAccessory(self.log, self.landroidCloud, mowerConfig));
     });
     callback(this.accessories);
 }
+LandroidPlatform.prototype.landroidUpdate = function(mower, data) {
+    this.accessories.forEach(accessory=>{
+        accessory.landroidUpdate(mower, data);
+    });
+}
 
-function LandroidAccessory(config, log) {
+function LandroidAccessory(log, cloud, config) {
+    this.landroidCloud = cloud;
     this.log = log;
     this.config = config;
     this.name = config.name;
     this.config.enable = true;
     this.firstUpdate = false;
+    this.serial = null;
 
-    this.landroidAdapter = {"log": new LandroidLogger(log),
-                            "config": config,
-                            "setState": function(id,val,ack){}};
+    // Fallback for old config file
+    if(this.config.dev_sel !== undefined){
+      this.config.dev_name = ""+(this.config.dev_sel+1);
+      this.log("WARNING: dev_sel parameter not supported anymore, use dev_name (usually dev_sel + 1)");
+      this.log("WARNING: Automatically creating name \"" + this.config.dev_name + "\" for mower");
+    }
+    this.config.dev_name = this.config.dev_name || "1";
 
-    this.dataset = new LandroidDataset();
+    this.dataset = {};
     this.dataset.batteryLevel = 0;
     this.dataset.batteryCharging = false;
     this.dataset.statusCode = 0;
@@ -47,9 +79,6 @@ function LandroidAccessory(config, log) {
 
     this.contactService = new Service.ContactSensor(this.name+" Issue");
     this.contactService.getCharacteristic(Characteristic.ContactSensorState).on('get', this.getContactSensorState.bind(this));
-
-    this.landroidCloud = new LandroidCloud(this.landroidAdapter);
-    this.landroidCloud.init(this.landroidUpdate.bind(this));
 }
 
 LandroidAccessory.prototype.getServices = function() {
@@ -69,7 +98,16 @@ LandroidAccessory.prototype.getServices = function() {
     services.push(this.contactService);
     return services;
 }
-LandroidAccessory.prototype.landroidUpdate = function(data) {
+LandroidAccessory.prototype.landroidUpdate = function(mower, data) {
+  if(this.serial === null){
+    if(mower.raw.name == this.config.dev_name){
+      this.serial = mower.serial;
+      this.log("Mower "+this.name+" configured. ("+this.config.dev_name+")");
+    } else{
+      return false;
+    }
+  } else if(mower.serial !== this.serial) return;
+
   if(data != null && data != undefined){
     let oldDataset = this.dataset;
     this.dataset = new LandroidDataset(data);
@@ -126,7 +164,10 @@ LandroidAccessory.prototype.setOn = function(state, callback) {
   callback(null);
 }
 LandroidAccessory.prototype.sendMessage = function(cmd, params) {
-    let message = {};
+  if(!this.serial){
+    this.log("Error: Mower has not been configured yet.");
+  }
+  let message = {};
     if (cmd) {
         message["cmd"] = cmd;
     }
@@ -134,8 +175,8 @@ LandroidAccessory.prototype.sendMessage = function(cmd, params) {
         message = Object.assign(message, params);
     }
     let outMsg = JSON.stringify(message);
-    this.log("Sending to landroid cloud: " + outMsg);
-    this.landroidCloud.sendMessage(outMsg);
+    this.log("Sending to landroid cloud: [" + outMsg + "] (#"+mower.serial+")");
+    this.landroidCloud.sendMessage(outMsg, mower.serial);
 }
 
 function isOn(c){
