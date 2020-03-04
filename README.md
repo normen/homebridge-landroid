@@ -1,5 +1,5 @@
 # homebridge-landroid [![NPM Version](https://img.shields.io/npm/v/homebridge-landroid.svg)](https://www.npmjs.com/package/homebridge-landroid)
-Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud
+Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud, supports most Landroid mowers.
 
 ## Features
  - Start mower
@@ -43,12 +43,12 @@ Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud
 ```
 
 #### Options
- - `name` Name for your Landroid to appear in HomeKit
  - `email` eMail for your Worx account
- - `pwd` password for your Worx account
- - `dev_name` device name, default `"1"`
+ - `pwd` Password for your Worx account
+ - `name` Name for your Landroid to appear in HomeKit
+ - `dev_name` Device name, default `"1"`
    - Only needed if you have more than one Landroid
-   - Worx by default assigns sequential numbers as names
+   - Worx currently auto-assigns sequential numbers as names
 
 ## Usage
  The mower will appear as a switch and a contact sensor in HomeKit.
@@ -57,7 +57,7 @@ Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud
 The switch shows the current status and allows to control the mower. If the switch is off the mower is either on the home base or on its way to the home base. If it's on the mower is currently mowing. Turn the switch on to start the mowing cycle, turn it off to send the mower back home.
 
 #### Contact Sensor
-The contact sensor is used to dipsplay issues with the mower (trapped, outside wire etc.), when the contact sensor is "open" there is some issue that prevents the mower from continuing. Fix the issue to control the mower again.
+The contact sensor is used to display issues with the mower (trapped, outside wire etc.), when the contact sensor is "open" there is some issue that prevents the mower from continuing. Fix the issue to control the mower again.
 
 #### Battery Status
 You can see the battery status in the settings of either the switch or contact sensor in the Home app and you can ask Siri about the battery status of your lawn mower.

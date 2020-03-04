@@ -1,5 +1,6 @@
 var Service, Characteristic;
 var LandroidCloud = require('iobroker.worx/lib/api');
+var LandroidDataset = require('./LandroidDataset');
 
 function LandroidPlatform(log, config) {
     this.config = config;
@@ -79,6 +80,10 @@ function LandroidAccessory(log, cloud, config) {
 
     this.contactService = new Service.ContactSensor(this.name+" Issue");
     this.contactService.getCharacteristic(Characteristic.ContactSensorState).on('get', this.getContactSensorState.bind(this));
+
+    /*this.leakService = new Service.LeakSensor(this.name);
+    this.leakService.getCharacteristic(Characteristic.LeakDetected).value = false;
+    this.leakService.getCharacteristic(Characteristic.LeakDetected).on('get', this.getLeak.bind(this));*/
 }
 
 LandroidAccessory.prototype.getServices = function() {
@@ -96,6 +101,7 @@ LandroidAccessory.prototype.getServices = function() {
     services.push(this.service);
     services.push(this.batteryService);
     services.push(this.contactService);
+    //services.push(this.leakService);
     return services;
 }
 LandroidAccessory.prototype.landroidUpdate = function(mower, data) {
@@ -129,7 +135,8 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data) {
     }
     if(this.dataset.errorCode != oldDataset.errorCode){
       this.log(this.name + " error code changed to " + this.dataset.errorCode + " (" + this.dataset.errorDescription + ")");
-      this.contactService.getCharacteristic(Characteristic.ContactSensorState).updateValue(this.dataset.errorCode != 0?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
+      this.contactService.getCharacteristic(Characteristic.ContactSensorState).updateValue(isError(this.dataset.errorCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
+      //this.leakService.getCharacteristic(Characteristic.LeakDetected).updateValue(this.dataset.errorCode == 5);
     }
   }
   if(!this.firstUpdate){
@@ -150,6 +157,13 @@ LandroidAccessory.prototype.getStatusLowBattery = function(callback) {
 }
 LandroidAccessory.prototype.getOn = function(callback) {
   if(isOn(this.dataset.statusCode)){
+    callback(null, true);
+  }else{
+    callback(null, false);
+  }
+}
+LandroidAccessory.prototype.getLeak = function(callback) {
+  if(this.dataset.statusCode == 5){
     callback(null, true);
   }else{
     callback(null, false);
