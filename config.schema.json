@@ -15,6 +15,12 @@
       "type": "string",
       "required": true
     },
+    "debug":{
+      "title": "Debug Mode",
+      "description": "Shows additional debug info in the log",
+      "type": "boolean",
+      "required": false
+    },
     "landroids":{
       "title": "Configured Mowers",
       "type": "array",

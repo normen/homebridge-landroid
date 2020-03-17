@@ -49,6 +49,7 @@ Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud, s
  - `dev_name` Device name, default `"1"`
    - Only needed if you have more than one Landroid
    - Worx currently auto-assigns sequential numbers as names
+ - `debug`Enable additional log output, default `false`
 
 ## Usage
  The mower will appear as a switch and a contact sensor in HomeKit.

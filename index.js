@@ -26,7 +26,7 @@ function LandroidPlatform(log, config) {
     this.landroidAdapter = {"log": new LandroidLogger(log)};
     this.landroidCloud = new LandroidCloud(config.email, config.pwd, this.landroidAdapter);
     this.landroidCloud.on("mqtt", this.landroidUpdate.bind(this));
-    this.landroidCloud.on("found", this.landroidUpdate.bind(this));
+    this.landroidCloud.on("found", this.landroidFound.bind(this));
     this.landroidCloud.on("error", error => {log(error)} );
     //this.landroidCloud.on("online", online => {console.log(online)} );
     //this.landroidCloud.on("offline", offline => {console.log(offline)} );
@@ -40,6 +40,13 @@ LandroidPlatform.prototype.accessories = function(callback) {
     });
     callback(this.accessories);
 }
+LandroidPlatform.prototype.landroidFound = function(mower, data) {
+  if(this.debug && mower && mower.raw) {
+    this.log("[DEBUG] Found mower in cloud: " + JSON.stringify(mower.raw));
+  }
+  this.landroidUpdate(mower,data);
+}
+
 LandroidPlatform.prototype.landroidUpdate = function(mower, data) {
     this.accessories.forEach(accessory=>{
         accessory.landroidUpdate(mower, data);
@@ -54,6 +61,7 @@ function LandroidAccessory(log, cloud, config) {
     this.config.enable = true;
     this.firstUpdate = false;
     this.serial = null;
+    this.debug = config.debug || false;
 
     // Fallback for old config file
     if(this.config.dev_sel !== undefined){
