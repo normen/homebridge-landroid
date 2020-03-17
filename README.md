@@ -46,9 +46,8 @@ Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud, s
  - `email` eMail for your Worx account
  - `pwd` Password for your Worx account
  - `name` Name for your Landroid to appear in HomeKit
- - `dev_name` Device name, default `"1"`
+ - `dev_name` Device name as configured in the Worx cloud, default `"1"`
    - Worx normally auto-assigns sequential numbers as names
-   - For some mowers the name is based on the model, e.g. `"M 700"`
    - See the log output for a list of all reported mower names after setting up user and password
  - `debug`Enable additional log output, default `false`
 
