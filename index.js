@@ -44,6 +44,8 @@ LandroidPlatform.prototype.accessories = function(callback) {
 LandroidPlatform.prototype.landroidFound = function(mower, data) {
   if(this.debug && mower && mower.raw) {
     this.log("[DEBUG] MOWER: " + JSON.stringify(mower.raw));
+  }else if(mower && mower.raw){
+    this.log("Found mower in Worx Cloud with name: " + mower.raw.name);
   }
   this.landroidUpdate(mower,data);
 }
