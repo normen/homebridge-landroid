@@ -5,6 +5,7 @@ var LandroidDataset = require('./LandroidDataset');
 function LandroidPlatform(log, config) {
     this.config = config;
     this.log = log;
+    this.debug = config.debug || false;
     if(!config.email || !config.pwd){
       this.log("WARNING: No account configured, please set email and password of your Worx account in config.json!");
       // Fallback: get config from first landroid (old config file)
@@ -42,12 +43,15 @@ LandroidPlatform.prototype.accessories = function(callback) {
 }
 LandroidPlatform.prototype.landroidFound = function(mower, data) {
   if(this.debug && mower && mower.raw) {
-    this.log("[DEBUG] Found mower in cloud: " + JSON.stringify(mower.raw));
+    this.log("[DEBUG] MOWER: " + JSON.stringify(mower.raw));
   }
   this.landroidUpdate(mower,data);
 }
 
 LandroidPlatform.prototype.landroidUpdate = function(mower, data) {
+    if(this.debug && data) {
+      this.log("[DEBUG] DATA: " + JSON.stringify(data));
+    }
     this.accessories.forEach(accessory=>{
         accessory.landroidUpdate(mower, data);
     });
@@ -61,7 +65,6 @@ function LandroidAccessory(log, cloud, config) {
     this.config.enable = true;
     this.firstUpdate = false;
     this.serial = null;
-    this.debug = config.debug || false;
 
     // Fallback for old config file
     if(this.config.dev_sel !== undefined){
