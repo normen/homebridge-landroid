@@ -108,13 +108,13 @@ function LandroidAccessory(cloud, log, name, serial, accessory) {
       // new accessory object
       var uuid = UUIDGen.generate(serial);
       //this.log('Creating new accessory for ' + name + ' (' + serial + ')');
-      this.accessory = new Accessory(name, uuid);
+      this.accessory = new Accessory("Landroid " + name, uuid);
       this.accessory.context.name = name;
       this.accessory.context.serial = serial;
 
-      this.accessory.addService(new Service.Switch("Landroid " + this.name));
+      this.accessory.addService(new Service.Switch("Landroid " + name));
       this.accessory.addService(new Service.BatteryService());
-      this.accessory.addService(new Service.ContactSensor("Landroid " + this.name + " Problem"));
+      this.accessory.addService(new Service.ContactSensor("Landroid " + name + " Problem"));
       
       //const infoService = new Service.AccessoryInformation();
       //this.accessory.addService(infoService);
