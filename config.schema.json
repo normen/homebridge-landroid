@@ -15,34 +15,17 @@
       "type": "string",
       "required": true
     },
+    "reload":{
+      "title": "Reload All Mowers",
+      "description": "Clears and reloads all mowers from the cloud, set and reboot HomeBridge, then unset again.",
+      "type": "boolean",
+      "required": false
+    },
     "debug":{
       "title": "Debug Mode",
       "description": "Shows additional debug info in the log",
       "type": "boolean",
       "required": false
-    },
-    "landroids":{
-      "title": "Configured Mowers",
-      "type": "array",
-      "items":{
-        "title": "Mower",
-        "type": "object",
-        "properties":{
-          "name":{
-            "title": "HomeKit Name",
-            "description": "The name of the mower in HomeKit",
-            "type": "string",
-            "required": true
-          },
-          "dev_name":{
-            "title": "Worx Cloud Name",
-            "description": "The mower name as it is configured in the Worx cloud, default \"1\" (first mower)",
-            "type": "string",
-            "default": "1",
-            "required": false
-          }
-        }
-      }
     }
   }
 }

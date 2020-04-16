@@ -2,6 +2,7 @@
 Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud, supports most Landroid mowers.
 
 ## Features
+ - Automatically fetches all mowers from Worx Cloud
  - Start mower
  - Return mower to home
  - Mowing status (on / off)
@@ -26,17 +27,7 @@ Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud, s
     {
       "platform": "Landroid",
       "email": "my@email.com",
-      "pwd": "my_password",
-      "landroids": [
-        {
-          "name": "My Landroid",
-          "dev_name": "1"
-        },
-        {
-          "name": "My Other Landroid",
-          "dev_name": "2"
-        }
-      ]
+      "pwd": "my_password"
     }
   ]
 }
@@ -46,10 +37,8 @@ Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud, s
  - `email` eMail for your Worx account
  - `pwd` Password for your Worx account
  - `name` Name for your Landroid to appear in HomeKit
- - `dev_name` Device name as configured in the Worx cloud, default `"1"`
-   - Worx normally auto-assigns sequential numbers as names
-   - See the log output for a list of all reported mower names after setting up user and password
- - `debug`Enable additional log output, default `false`
+ - `reload` Clears all mowers in HomeKit and reloads them from the cloud, default `false`
+ - `debug` Enable additional log output, default `false`
 
 ## Usage
  The mower will appear as a switch and a contact sensor in HomeKit.

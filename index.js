@@ -1,52 +1,90 @@
-var Service, Characteristic;
+"use strict";
+var Accessory, Service, Characteristic, UUIDGen;
 var LandroidCloud = require('iobroker.worx/lib/api');
 var LandroidDataset = require('./LandroidDataset');
 
-function LandroidPlatform(log, config) {
-    this.config = config;
-    this.log = log;
-    this.debug = config.debug || false;
-    if(!config.email || !config.pwd){
-      this.log("WARNING: No account configured, please set email and password of your Worx account in config.json!");
-      // Fallback: get config from first landroid (old config file)
-      if(config.landroids && config.landroids[0]){
-        if(config.landroids[0].email){
-          this.log("WARNING: Per-Landroid email/pass is not supported anymore.");
-          this.log("WARNING: Please update your config.json to use a global email and password in the Landroid platform.");
-          this.log("WARNING: The login data of the first Landroid will be used for the global login for now.");
-          config.email = config.landroids[0].email;
-          config.pwd = config.landroids[0].pwd;
-        }else{
-          return;
-        }
-      }else{
-        return;
-      }
-    }
+function LandroidPlatform(log, config, api) {
+  this.config = config;
+  this.log = log;
+  this.debug = config.debug || false;
+  this.accessories = [];
 
-    this.landroidAdapter = {"log": new LandroidLogger(log)};
-    this.landroidCloud = new LandroidCloud(config.email, config.pwd, this.landroidAdapter);
-    this.landroidCloud.on("mqtt", this.landroidUpdate.bind(this));
-    this.landroidCloud.on("found", this.landroidFound.bind(this));
-    this.landroidCloud.on("error", error => {log(error)} );
-    //this.landroidCloud.on("online", online => {console.log(online)} );
-    //this.landroidCloud.on("offline", offline => {console.log(offline)} );
-    this.landroidCloud.on("connect", connect => {log("Connected to WORX cloud.")} );
-}
-LandroidPlatform.prototype.accessories = function(callback) {
-    var self = this;
-    this.accessories = [];
-    this.config.landroids.forEach(mowerConfig=>{
-        self.accessories.push(new LandroidAccessory(self.log, self.landroidCloud, mowerConfig));
+  if(!config.email || !config.pwd){
+    this.log("WARNING: No account configured, please set email and password of your Worx account in config.json!");
+    return;
+  }
+
+  const self = this;
+  if (api) {
+    // Save the API object as plugin needs to register new accessory via this object
+    this.api = api;
+
+    // Listen to event "didFinishLaunching", this means homebridge already finished loading cached accessories.
+    // Platform Plugin should only register new accessory that doesn't exist in homebridge after this event.
+    // Or start discover new accessories.
+    this.api.on('didFinishLaunching', function () {
+      self.log('DidFinishLaunching');
+      if(self.config.reload){
+        self.log('**** WARNING: Landroid plugin is in reload mode, mowers will be recreated each boot ****');
+        self.accessories.forEach(accessory => {
+          self.log('Removing Landroid ' + accessory.accessory.displayName + ' from HomeKit');
+          self.api.unregisterPlatformAccessories('homebridge-landroid', 'Landroid', [accessory.accessory]);
+        });
+        self.accessories = [];
+      }
+      self.landroidAdapter = {"log": new LandroidLogger(log)};
+      self.landroidCloud = new LandroidCloud(config.email, config.pwd, self.landroidAdapter);
+      self.landroidCloud.on("mqtt", self.landroidUpdate.bind(self));
+      self.landroidCloud.on("found", self.landroidFound.bind(self));
+      self.landroidCloud.on("error", error => {log(error)} );
+      //self.landroidCloud.on("online", online => {console.log(online)} );
+      //self.landroidCloud.on("offline", offline => {console.log(offline)} );
+      self.landroidCloud.on("connect", connect => {log("Connected to WORX cloud.")} );
+      // add link to cloud to restored accessories
+      self.accessories.forEach(accessory=>{
+        accessory.landroidCloud = self.landroidCloud;
+      });
     });
-    callback(this.accessories);
+  }
 }
+
+// Function invoked when homebridge tries to restore cached accessory.
+LandroidPlatform.prototype.configureAccessory = function(accessory) {
+  if (!this.config) { // happens if plugin is disabled and still active accessories
+    return;
+  }
+  this.log('Restoring Landroid ' + accessory.displayName + ' from HomeKit');
+  //TODO: reachable only if updated from cloud
+  accessory.reachable = false;
+  this.accessories.push(new LandroidAccessory(this.landroidCloud, this.log, null, null, accessory));
+}
+
+// Handler will be invoked when user try to config your plugin.
+// Callback can be cached and invoke when necessary.
+LandroidPlatform.prototype.configurationRequestHandler = function(context, request, callback) {
+  callback(null);
+}
+
 LandroidPlatform.prototype.landroidFound = function(mower, data) {
   if(this.debug && mower && mower.raw) {
     this.log("[DEBUG] MOWER: " + JSON.stringify(mower.raw));
   }else if(mower && mower.raw){
-    this.log("Found mower in Worx Cloud with name: " + mower.raw.name);
+    this.log("Found Landroid in Worx Cloud with name: " + mower.raw.name);
   }
+  for(var i = 0; i<this.accessories.length; i++){
+    const accessory = this.accessories[i];
+    if(accessory.serial == mower.raw.serial_number){
+      //already have this one
+      accessory.reachable = true;
+      this.landroidUpdate(mower, data);
+      return;
+    }
+  }
+  // don't have this one, add it
+  const newMower = new LandroidAccessory(this.landroidCloud, this.log, mower.raw.name, mower.raw.serial_number);
+  this.accessories.push(newMower);
+  this.log("Adding Landroid " + mower.raw.name + " to HomeKit");
+  this.api.registerPlatformAccessories('homebridge-landroid', 'Landroid', [newMower.accessory]);
   this.landroidUpdate(mower,data);
 }
 
@@ -59,22 +97,31 @@ LandroidPlatform.prototype.landroidUpdate = function(mower, data) {
     });
 }
 
-function LandroidAccessory(log, cloud, config) {
+//TODO: add other constructor
+function LandroidAccessory(cloud, log, name, serial, accessory) {
     this.landroidCloud = cloud;
     this.log = log;
-    this.config = config;
-    this.name = config.name;
-    this.config.enable = true;
-    this.firstUpdate = false;
-    this.serial = null;
 
-    // Fallback for old config file
-    if(this.config.dev_sel !== undefined){
-      this.config.dev_name = ""+(this.config.dev_sel+1);
-      this.log("WARNING: dev_sel parameter not supported anymore, use dev_name (usually dev_sel + 1)");
-      this.log("WARNING: Automatically creating name \"" + this.config.dev_name + "\" for mower");
+    if (accessory) {
+      this.accessory = accessory;
+    } else {
+      // new accessory object
+      var uuid = UUIDGen.generate(serial);
+      //this.log('Creating new accessory for ' + name + ' (' + serial + ')');
+      this.accessory = new Accessory(name, uuid);
+      this.accessory.context.name = name;
+      this.accessory.context.serial = serial;
+
+      this.accessory.addService(new Service.Switch("Landroid " + this.name));
+      this.accessory.addService(new Service.BatteryService());
+      this.accessory.addService(new Service.ContactSensor("Landroid " + this.name + " Problem"));
+      
+      //const infoService = new Service.AccessoryInformation();
+      //this.accessory.addService(infoService);
     }
-    this.config.dev_name = this.config.dev_name || "1";
+
+    this.name = this.accessory.context.name;
+    this.serial = this.accessory.context.serial;
 
     this.dataset = {};
     this.dataset.batteryLevel = 0;
@@ -82,82 +129,57 @@ function LandroidAccessory(log, cloud, config) {
     this.dataset.statusCode = 0;
     this.dataset.errorCode = 0;
 
-    this.service = new Service.Switch(this.name);
-    this.service.getCharacteristic(Characteristic.On).on('get', this.getOn.bind(this));
-    this.service.getCharacteristic(Characteristic.On).on('set', this.setOn.bind(this));
+    this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).on('get', this.getOn.bind(this));
+    this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).on('set', this.setOn.bind(this));
 
-    this.batteryService = new Service.BatteryService();
-    this.batteryService.getCharacteristic(Characteristic.BatteryLevel).on('get', this.getBatteryLevel.bind(this));
-    this.batteryService.getCharacteristic(Characteristic.StatusLowBattery).on('get', this.getStatusLowBattery.bind(this));
-    this.batteryService.getCharacteristic(Characteristic.ChargingState).on('get', this.getChargingState.bind(this));
+    this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.BatteryLevel).on('get', this.getBatteryLevel.bind(this));
+    this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.StatusLowBattery).on('get', this.getStatusLowBattery.bind(this));
+    this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.ChargingState).on('get', this.getChargingState.bind(this));
 
-    this.contactService = new Service.ContactSensor(this.name+" Issue");
-    this.contactService.getCharacteristic(Characteristic.ContactSensorState).on('get', this.getContactSensorState.bind(this));
+    this.accessory.getService(Service.ContactSensor).getCharacteristic(Characteristic.ContactSensorState).on('get', this.getContactSensorState.bind(this));
+
+    this.accessory.getService(Service.AccessoryInformation)
+      .setCharacteristic(Characteristic.Name, this.name)
+      .setCharacteristic(Characteristic.Manufacturer, 'Worx')
+      .setCharacteristic(Characteristic.Model, 'Landroid')
+      .setCharacteristic(Characteristic.SerialNumber, this.serial);
 
     /*this.leakService = new Service.LeakSensor(this.name);
     this.leakService.getCharacteristic(Characteristic.LeakDetected).value = false;
     this.leakService.getCharacteristic(Characteristic.LeakDetected).on('get', this.getLeak.bind(this));*/
 }
 
-LandroidAccessory.prototype.getServices = function() {
-    var services = [];
-
-    this.infoService = new Service.AccessoryInformation();
-    this.infoService.setCharacteristic(Characteristic.Name, this.name)
-    .setCharacteristic(Characteristic.Manufacturer, 'Worx')
-    .setCharacteristic(Characteristic.Model, 'Landroid')
-    .setCharacteristic(Characteristic.SerialNumber, 'xxx')
-    .setCharacteristic(Characteristic.FirmwareRevision, process.env.version)
-    .setCharacteristic(Characteristic.HardwareRevision, '1.0.0');
-
-    services.push(this.infoService);
-    services.push(this.service);
-    services.push(this.batteryService);
-    services.push(this.contactService);
-    //services.push(this.leakService);
-    return services;
-}
 LandroidAccessory.prototype.landroidUpdate = function(mower, data) {
-  if(this.serial === null){
-    if(mower.raw.name == this.config.dev_name){
-      this.serial = mower.serial;
-      this.log("Mower "+this.name+" configured. ("+this.config.dev_name+")");
-    } else{
-      return false;
-    }
-  } else if(mower.serial !== this.serial) return;
+  if(mower.raw.serial_number !== this.serial) return;
 
   if(data != null && data != undefined){
     let oldDataset = this.dataset;
     this.dataset = new LandroidDataset(data);
     if(this.dataset.batteryLevel != oldDataset.batteryLevel){
-      this.log(this.name + " battery level changed to " + this.dataset.batteryLevel);
-      this.batteryService.getCharacteristic(Characteristic.BatteryLevel).updateValue(this.dataset.batteryLevel);
+      this.log("Landroid " + this.name + " battery level changed to " + this.dataset.batteryLevel);
+      this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.BatteryLevel).updateValue(this.dataset.batteryLevel);
     }
     if(this.dataset.batteryCharging != oldDataset.batteryCharging){
-      this.log(this.name + " charging status changed to " + this.dataset.batteryCharging);
-      this.batteryService.getCharacteristic(Characteristic.ChargingState).updateValue(this.dataset.batteryCharging?Characteristic.ChargingState.CHARGING:Characteristic.ChargingState.NOT_CHARGING);
+      this.log("Landroid " + this.name + " charging status changed to " + this.dataset.batteryCharging);
+      this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.ChargingState).updateValue(this.dataset.batteryCharging?Characteristic.ChargingState.CHARGING:Characteristic.ChargingState.NOT_CHARGING);
     }
     if(this.dataset.statusCode != oldDataset.statusCode){
-      this.log(this.name + " status changed to " + this.dataset.statusCode + " (" + this.dataset.statusDescription + ")");
+      this.log("Landroid " + this.name + " status changed to " + this.dataset.statusCode + " (" + this.dataset.statusDescription + ")");
       if(isOn(this.dataset.statusCode)){
-        this.service.getCharacteristic(Characteristic.On).updateValue(true);
+        this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).updateValue(true);
       }else{
-        this.service.getCharacteristic(Characteristic.On).updateValue(false);
+        this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).updateValue(false);
       }
     }
     if(this.dataset.errorCode != oldDataset.errorCode){
-      this.log(this.name + " error code changed to " + this.dataset.errorCode + " (" + this.dataset.errorDescription + ")");
-      this.contactService.getCharacteristic(Characteristic.ContactSensorState).updateValue(isError(this.dataset.errorCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
+      this.log("Landroid " + this.name + " error code changed to " + this.dataset.errorCode + " (" + this.dataset.errorDescription + ")");
+      this.accessory.getService(Service.ContactSensor).getCharacteristic(Characteristic.ContactSensorState).updateValue(isError(this.dataset.errorCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
       //this.leakService.getCharacteristic(Characteristic.LeakDetected).updateValue(this.dataset.errorCode == 5);
     }
   }
-  if(!this.firstUpdate){
-    this.firstUpdate = true;
-  }
 }
 LandroidAccessory.prototype.getContactSensorState = function(callback) {
-  callback(null,  this.dataset.errorCode != 0?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
+  callback(null,  isError(this.dataset.errorCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
 }
 LandroidAccessory.prototype.getBatteryLevel = function(callback) {
   callback(null, this.dataset.batteryLevel);
@@ -202,7 +224,7 @@ LandroidAccessory.prototype.sendMessage = function(cmd, params) {
         message = Object.assign(message, params);
     }
     let outMsg = JSON.stringify(message);
-    this.log("Sending to landroid cloud: [" + outMsg + "] (#"+this.serial+")");
+    this.log("Sending to Landroid " + this.name + ": [" + outMsg + "] ("+this.serial+")");
     this.landroidCloud.sendMessage(outMsg, this.serial);
 }
 
@@ -240,7 +262,9 @@ function LandroidLogger(log){
 }
 
 module.exports = function(homebridge) {
-    Service = homebridge.hap.Service;
-    Characteristic = homebridge.hap.Characteristic;
-    homebridge.registerPlatform("homebridge-landroid", "Landroid", LandroidPlatform);
+  Accessory = homebridge.platformAccessory;
+  Service = homebridge.hap.Service;
+  Characteristic = homebridge.hap.Characteristic;
+  UUIDGen = homebridge.hap.uuid;
+  homebridge.registerPlatform("homebridge-landroid", "Landroid", LandroidPlatform, true);
 }
