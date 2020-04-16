@@ -36,7 +36,6 @@ Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud, s
 #### Options
  - `email` eMail for your Worx account
  - `pwd` Password for your Worx account
- - `name` Name for your Landroid to appear in HomeKit
  - `reload` Clears all mowers in HomeKit and reloads them from the cloud, default `false`
  - `debug` Enable additional log output, default `false`
 
