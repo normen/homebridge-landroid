@@ -75,7 +75,7 @@ LandroidPlatform.prototype.landroidFound = function(mower, data) {
     const accessory = this.accessories[i];
     if(accessory.serial == mower.raw.serial_number){
       //already have this one
-      accessory.reachable = true;
+      accessory.accessory.reachable = true;
       this.landroidUpdate(mower, data);
       return;
     }
