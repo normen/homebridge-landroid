@@ -54,9 +54,8 @@ LandroidPlatform.prototype.configureAccessory = function(accessory) {
     return;
   }
   this.log('Restoring Landroid ' + accessory.displayName + ' from HomeKit');
-  //TODO: reachable only if updated from cloud
   accessory.reachable = false;
-  this.accessories.push(new LandroidAccessory(this.landroidCloud, this.log, null, null, accessory));
+  this.accessories.push(new LandroidAccessory(this, null, null, accessory));
 }
 
 // Handler will be invoked when user try to config your plugin.
@@ -81,7 +80,7 @@ LandroidPlatform.prototype.landroidFound = function(mower, data) {
     }
   }
   // don't have this one, add it
-  const newMower = new LandroidAccessory(this.landroidCloud, this.log, mower.raw.name, mower.raw.serial_number);
+  const newMower = new LandroidAccessory(this, mower.raw.name, mower.raw.serial_number);
   this.accessories.push(newMower);
   this.log("Adding Landroid " + mower.raw.name + " to HomeKit");
   this.api.registerPlatformAccessories('homebridge-landroid', 'Landroid', [newMower.accessory]);
@@ -98,9 +97,10 @@ LandroidPlatform.prototype.landroidUpdate = function(mower, data) {
 }
 
 //TODO: add other constructor
-function LandroidAccessory(cloud, log, name, serial, accessory) {
-    this.landroidCloud = cloud;
-    this.log = log;
+function LandroidAccessory(platform, name, serial, accessory) {
+    this.landroidCloud = platform.landroidCloud;
+    this.log = platform.log;
+    this.config = platform.config;
 
     if (accessory) {
       this.accessory = accessory;
@@ -115,9 +115,7 @@ function LandroidAccessory(cloud, log, name, serial, accessory) {
       this.accessory.addService(new Service.Switch("Landroid " + name));
       this.accessory.addService(new Service.BatteryService());
       this.accessory.addService(new Service.ContactSensor("Landroid " + name + " Problem"));
-      
-      //const infoService = new Service.AccessoryInformation();
-      //this.accessory.addService(infoService);
+      if(this.config.rainsensor) this.accessory.addService(new Service.LeakSensor("Landroid " + name + " Leak"));
     }
 
     this.name = this.accessory.context.name;
@@ -144,9 +142,7 @@ function LandroidAccessory(cloud, log, name, serial, accessory) {
       .setCharacteristic(Characteristic.Model, 'Landroid')
       .setCharacteristic(Characteristic.SerialNumber, this.serial);
 
-    /*this.leakService = new Service.LeakSensor(this.name);
-    this.leakService.getCharacteristic(Characteristic.LeakDetected).value = false;
-    this.leakService.getCharacteristic(Characteristic.LeakDetected).on('get', this.getLeak.bind(this));*/
+    if(this.config.rainsensor && this.accessory.getService(Service.LeakSensor)) this.accessory.getService(Service.LeakSensor).on('get', this.getLeak.bind(this));
 }
 
 LandroidAccessory.prototype.landroidUpdate = function(mower, data) {
@@ -174,7 +170,7 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data) {
     if(this.dataset.errorCode != oldDataset.errorCode){
       this.log("Landroid " + this.name + " error code changed to " + this.dataset.errorCode + " (" + this.dataset.errorDescription + ")");
       this.accessory.getService(Service.ContactSensor).getCharacteristic(Characteristic.ContactSensorState).updateValue(isError(this.dataset.errorCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
-      //this.leakService.getCharacteristic(Characteristic.LeakDetected).updateValue(this.dataset.errorCode == 5);
+      if(this.config.rainsensor && this.accessory.getService(Service.LeakSensor)) this.accessory.getService(Service.LeakSensor).getCharacteristic(Characteristic.LeakDetected).updateValue(this.dataset.errorCode == 5);
     }
   }
 }
