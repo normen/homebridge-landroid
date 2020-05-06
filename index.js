@@ -8,6 +8,7 @@ function LandroidPlatform(log, config, api) {
   this.log = log;
   this.debug = config.debug || false;
   this.accessories = [];
+  this.cloudMowers = [];
 
   if(!config.email || !config.pwd){
     this.log("WARNING: No account configured, please set email and password of your Worx account in config.json!");
@@ -15,37 +16,51 @@ function LandroidPlatform(log, config, api) {
   }
 
   const self = this;
-  if (api) {
-    // Save the API object as plugin needs to register new accessory via this object
-    this.api = api;
+  this.api = api;
 
-    // Listen to event "didFinishLaunching", this means homebridge already finished loading cached accessories.
-    // Platform Plugin should only register new accessory that doesn't exist in homebridge after this event.
-    // Or start discover new accessories.
-    this.api.on('didFinishLaunching', function () {
-      self.log('DidFinishLaunching');
-      if(self.config.reload){
-        self.log('**** WARNING: Landroid plugin is in reload mode, mowers will be recreated each boot ****');
-        self.accessories.forEach(accessory => {
-          self.log('Removing Landroid ' + accessory.accessory.displayName + ' from HomeKit');
-          self.api.unregisterPlatformAccessories('homebridge-landroid', 'Landroid', [accessory.accessory]);
-        });
-        self.accessories = [];
-      }
-      self.landroidAdapter = {"log": new LandroidLogger(log)};
-      self.landroidCloud = new LandroidCloud(config.email, config.pwd, self.landroidAdapter);
-      self.landroidCloud.on("mqtt", self.landroidUpdate.bind(self));
-      self.landroidCloud.on("found", self.landroidFound.bind(self));
-      self.landroidCloud.on("error", error => {log(error)} );
-      //self.landroidCloud.on("online", online => {console.log(online)} );
-      //self.landroidCloud.on("offline", offline => {console.log(offline)} );
-      self.landroidCloud.on("connect", connect => {log("Connected to WORX cloud.")} );
-      // add link to cloud to restored accessories
-      self.accessories.forEach(accessory=>{
-        accessory.landroidCloud = self.landroidCloud;
+  // Listen to event "didFinishLaunching", this means homebridge already finished loading cached accessories.
+  // Platform Plugin should only register new accessory that doesn't exist in homebridge after this event.
+  // Or start discover new accessories.
+  this.api.on('didFinishLaunching', function () {
+    self.log('DidFinishLaunching');
+    if(self.config.reload){
+      self.log('**** WARNING: Landroid plugin is in reload mode, mowers will be recreated each boot ****');
+      self.accessories.forEach(accessory => {
+        self.log('Removing Landroid ' + accessory.accessory.displayName + ' from HomeKit');
+        self.api.unregisterPlatformAccessories('homebridge-landroid', 'Landroid', [accessory.accessory]);
       });
+      self.accessories = [];
+    }
+    self.landroidAdapter = {"log": new LandroidLogger(log)};
+    self.landroidCloud = new LandroidCloud(config.email, config.pwd, self.landroidAdapter);
+    self.landroidCloud.on("mqtt", self.landroidUpdate.bind(self));
+    self.landroidCloud.on("found", self.landroidFound.bind(self));
+    self.landroidCloud.on("error", error => {
+      log(error);
+      // stop clearing old devices
+      if(self.removeTimeout) clearTimeout(self.removeTimeout);
+    } );
+    self.landroidCloud.on("connect", connect => {
+      log("Connected to WORX cloud.");
+      // remove old mowers 60 sec after connecting to cloud should be alright..
+      self.removeTimeout = setTimeout(self.clearOldMowers.bind(self), 60000);
+    } );
+    //self.landroidCloud.on("offline", offline => {console.log(offline)} );
+    //self.landroidCloud.on("online", online => {console.log(online)} );
+    // add link to cloud to restored accessories
+    self.accessories.forEach(accessory=>{
+      accessory.landroidCloud = self.landroidCloud;
     });
-  }
+  });
+}
+
+LandroidPlatform.prototype.clearOldMowers = function() {
+  const self = this;
+  this.accessories.forEach((accessory, idx, obj) => {
+    if(!self.cloudMowers.includes(accessory.serial)){
+      self.api.unregisterPlatformAccessories('homebridge-landroid', 'Landroid', [accessory.accessory]);
+    }
+  });
 }
 
 // Function invoked when homebridge tries to restore cached accessory.
@@ -70,6 +85,7 @@ LandroidPlatform.prototype.landroidFound = function(mower, data) {
   }else if(mower && mower.raw){
     this.log("Found Landroid in Worx Cloud with name: " + mower.raw.name);
   }
+  this.cloudMowers.push(mower.raw.serial_number);
   for(var i = 0; i<this.accessories.length; i++){
     const accessory = this.accessories[i];
     if(accessory.serial == mower.raw.serial_number){
