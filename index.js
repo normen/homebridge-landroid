@@ -59,6 +59,7 @@ LandroidPlatform.prototype.clearOldMowers = function() {
   this.accessories.forEach((accessory, idx, obj) => {
     if(!self.cloudMowers.includes(accessory.serial)){
       self.api.unregisterPlatformAccessories('homebridge-landroid', 'Landroid', [accessory.accessory]);
+      obj.splice(idx, 1);
     }
   });
 }
