@@ -132,7 +132,7 @@ function LandroidAccessory(platform, name, serial, accessory) {
       this.accessory.addService(new Service.Switch("Landroid " + name));
       this.accessory.addService(new Service.BatteryService());
       this.accessory.addService(new Service.ContactSensor("Landroid " + name + " Problem"));
-      if(this.config.rainsensor) this.accessory.addService(new Service.LeakSensor("Landroid " + name + " Leak"));
+      if(this.config.rainsensor) this.accessory.addService(new Service.LeakSensor("Landroid " + name + " Rain"));
     }
 
     this.name = this.accessory.context.name;
