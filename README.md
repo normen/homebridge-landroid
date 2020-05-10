@@ -38,7 +38,8 @@ Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud, s
  - `pwd` Password for your Worx account
  - `rainsensor` Adds an additional "Leak" sensor for rain detection
  - `reload` Clears all mowers in HomeKit and reloads them from the cloud, default `false`
- - `debug` Enable additional log output, default `false`
+ - `debug` Enable additional debug log output, default `false`
+ - `mowdata` Enable additional mowing data log output, default `false`
 
 ## Usage
  The mower will appear as a switch and a contact sensor in HomeKit.
