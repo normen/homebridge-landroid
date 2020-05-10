@@ -3,7 +3,9 @@
   "version": "0.8.1",
   "description": "HomeBridge plugin for Worx Landroid lawnmowers",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "./node_modules/homebridge/bin/homebridge -I -U ./.homebridge"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/normen/homebridge-landroid.git"
@@ -22,6 +24,9 @@
   "dependencies": {
     "iobroker.worx": "^1.0.0",
     "moment": "^2.24.0"
+  },
+  "devDependencies": {
+    "homebridge": "^1.0.0"
   },
   "engines": {
     "node": ">=6.0.0",
