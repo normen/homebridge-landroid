@@ -174,7 +174,7 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
   if(data != null && data != undefined){
     let oldDataset = this.dataset;
     this.dataset = new LandroidDataset(data);
-//    this.log("landroidUpdate ran with RSSI " + this.dataset.wifiQuality + ", battery temperature " + this.dataset.batteryTemperature);
+    // this.log("landroidUpdate ran with RSSI " + this.dataset.wifiQuality + ", battery temperature " + this.dataset.batteryTemperature);
 		if(mowdata){
 			if(oldDataset.totalTime != null && oldDataset.totalTime != undefined){
 				if(this.dataset.totalTime != oldDataset.totalTime){
