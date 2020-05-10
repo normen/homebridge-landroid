@@ -175,6 +175,31 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
     let oldDataset = this.dataset;
     this.dataset = new LandroidDataset(data);
 //    this.log("landroidUpdate ran with RSSI " + this.dataset.wifiQuality + ", battery temperature " + this.dataset.batteryTemperature);
+	if(mowdata){
+		if(oldDataset.totalTime != null && oldDataset.totalTime != undefined){
+			if(this.dataset.totalTime != oldDataset.totalTime){
+				totalTime = Number(this.dataset.totalTime) - Number(oldDataset.totalTime);
+				this.log("Landroid " + this.name + " new minutes worked: " + String(totalTime));
+			}
+			if(this.dataset.totalBladeTime != oldDataset.totalBladeTime){
+				totalBladeTime = Number(this.dataset.totalBladeTime) - Number(oldDataset.totalBladeTime);
+				this.log("Landroid " + this.name + " new minutes mowed: " + String(totalBladeTime));
+			}
+			if(this.dataset.totalDistance != oldDataset.totalDistance){
+				totalDistance = Number(this.dataset.totalDistance) - Number(oldDataset.totalDistance);
+				this.log("Landroid " + this.name + " new distance moved: " + String(totalDistance) + "m");
+			}
+		}else{
+			totalTime = Number(this.dataset.totalTime) / 60;
+			totalTime = totalTime.toFixed(2);
+			this.log("Landroid " + this.name + " hours worked so far: " + String(totalTime));
+			totalBladeTime = Number(this.dataset.totalBladeTime) / 60;
+			totalBladeTime = totalBladeTime.toFixed(2);
+			this.log("Landroid " + this.name + " hours mowed so far: " + String(totalBladeTime));
+			totalDistance = Number(this.dataset.totalDistance) / 1000;
+			this.log("Landroid " + this.name + " distance moved so far: " + String(totalDistance) + "km");
+		}
+	}
     if(this.dataset.batteryLevel != oldDataset.batteryLevel){
       this.log("Landroid " + this.name + " battery level changed to " + this.dataset.batteryLevel);
       this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.BatteryLevel).updateValue(this.dataset.batteryLevel);
@@ -189,31 +214,6 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
         this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).updateValue(true);
       }else{
         this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).updateValue(false);
-      }
-      if(mowdata){
-        if(oldDataset.totalTime != null && oldDataset.totalTime != undefined){
-          if(this.dataset.totalTime != oldDataset.totalTime){
-            totalTime = Number(this.dataset.totalTime) - Number(oldDataset.totalTime);
-              this.log("Landroid " + this.name + " new minutes worked: " + String(totalTime));
-          }
-          if(this.dataset.totalBladeTime != oldDataset.totalBladeTime){
-            totalBladeTime = Number(this.dataset.totalBladeTime) - Number(oldDataset.totalBladeTime);
-            this.log("Landroid " + this.name + " new minutes mowed: " + String(totalBladeTime));
-          }
-          if(this.dataset.totalDistance != oldDataset.totalDistance){
-            totalDistance = Number(this.dataset.totalDistance) - Number(oldDataset.totalDistance);
-            this.log("Landroid " + this.name + " new distance moved: " + String(totalDistance) + "m");
-          }
-        }else{
-          totalTime = Number(this.dataset.totalTime) / 60;
-          totalTime = totalTime.toFixed(2);
-          this.log("Landroid " + this.name + " hours worked so far: " + String(totalTime));
-          totalBladeTime = Number(this.dataset.totalBladeTime) / 60;
-          totalBladeTime = totalBladeTime.toFixed(2);
-          this.log("Landroid " + this.name + " hours mowed so far: " + String(totalBladeTime));
-          totalDistance = Number(this.dataset.totalDistance) / 1000;
-          this.log("Landroid " + this.name + " distance moved so far: " + String(totalDistance) + "km");
-        }
       }
     }
     if(this.dataset.errorCode != oldDataset.errorCode){
