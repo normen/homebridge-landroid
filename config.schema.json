@@ -33,5 +33,11 @@
       "type": "boolean",
       "required": false
     }
+    "mowdata":{
+      "title": "Mowing Data Logging",
+      "description": "Shows additional mowing data in the log",
+      "type": "boolean",
+      "required": false
+    }
   }
 }
