@@ -46,8 +46,8 @@ function LandroidPlatform(log, config, api) {
       // remove old mowers 60 sec after connecting to cloud should be alright..
       self.removeTimeout = setTimeout(self.clearOldMowers.bind(self), 60000);
     } );
-    // self.landroidCloud.on("offline", offline => {console.log(offline)} );
-    // self.landroidCloud.on("online", online => {console.log(online)} );
+    //self.landroidCloud.on("offline", offline => {console.log(offline)} );
+    //self.landroidCloud.on("online", online => {console.log(online)} );
     // add link to cloud to restored accessories
     self.accessories.forEach(accessory=>{
       accessory.landroidCloud = self.landroidCloud;
