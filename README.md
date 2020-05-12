@@ -51,3 +51,13 @@ The contact sensor is used to display issues with the mower (trapped, outside wi
 
 #### Battery Status
 You can see the battery status in the settings of either the switch or contact sensor in the Home app and you can ask Siri about the battery status of your lawn mower.
+
+## Development
+If you want new features or improve the plugin, you're very welcome to do so. The projects `devDependencies` include homebridge and the `npm run test` command has been adapted so that you can run a test instance of homebridge during development. 
+#### Setup
+- clone github repo
+- `npm install` in the project folder
+- create `.homebridge` folder in project root
+- add `config.json` with appropriate content to `.homebridge` folder
+- run `npm run test` to start the homebridge instance for testing
+
