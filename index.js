@@ -300,7 +300,6 @@ function LandroidLogger(log){
   }
   this.trace = this.noLogMsg;
   this.debug = this.noLogMsg;
-  this.mowdata = this.noLogMsg;
   this.info = this.logMsg;
   this.warn = this.logMsg;
   this.error = this.logMsg;
