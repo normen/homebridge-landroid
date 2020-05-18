@@ -39,5 +39,21 @@
       "type": "boolean",
       "required": false
     }
-  }
+  },
+  "form": [
+    "email",
+    "pwd",
+    "rainsensor",
+    {
+      "type": "section",
+      "expandable": true,
+      "expanded": false,
+      "title": "Advanced",
+      "items": [
+        "reload",
+        "mowdata",
+        "debug"
+      ]
+    }
+  ]
 }
