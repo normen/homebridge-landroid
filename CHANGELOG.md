@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
+## 0.9.1
+- downgrade/fix version of iobroker.worx library to 1.0.2
+
 ## 0.9.0    
 - added mowing data option (thanks andy-dinger!)
 - small cleanups and UI improvements
