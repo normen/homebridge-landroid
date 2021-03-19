@@ -179,7 +179,7 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
       if(oldDataset.totalTime != null && oldDataset.totalTime != undefined){
         if(this.dataset.totalTime != oldDataset.totalTime){
           totalTime = Number(this.dataset.totalTime) - Number(oldDataset.totalTime);
-          this.log("Landroid " + this.name + " new minutes worked: " + String(totalTime));
+          this.log("Landroid " + this.name + " new minutes worked: " + String(totalTime) + ", battery level now " + this.dataset.batteryLevel);
         }
         if(this.dataset.totalBladeTime != oldDataset.totalBladeTime){
           totalBladeTime = Number(this.dataset.totalBladeTime) - Number(oldDataset.totalBladeTime);
@@ -201,15 +201,15 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
       }
     }
     if(this.dataset.batteryLevel != oldDataset.batteryLevel){
-      this.log("Landroid " + this.name + " battery level changed to " + this.dataset.batteryLevel);
+    //  this.log("Landroid " + this.name + " battery level changed to " + this.dataset.batteryLevel);
       this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.BatteryLevel).updateValue(this.dataset.batteryLevel);
     }
     if(this.dataset.batteryCharging != oldDataset.batteryCharging){
-      this.log("Landroid " + this.name + " charging status changed to " + this.dataset.batteryCharging);
+      this.log("Landroid " + this.name + " charging status changed to " + this.dataset.batteryCharging + ", battery level now " + this.dataset.batteryLevel);
       this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.ChargingState).updateValue(this.dataset.batteryCharging?Characteristic.ChargingState.CHARGING:Characteristic.ChargingState.NOT_CHARGING);
     }
     if(this.dataset.statusCode != oldDataset.statusCode){
-      this.log("Landroid " + this.name + " status changed to " + this.dataset.statusCode + " (" + this.dataset.statusDescription + ")");
+      this.log("Landroid " + this.name + " status changed to " + this.dataset.statusCode + " (" + this.dataset.statusDescription + ")" + ", battery level now " + this.dataset.batteryLevel);
       if(isOn(this.dataset.statusCode)){
         this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).updateValue(true);
       }else{
@@ -217,7 +217,7 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
       }
     }
     if(this.dataset.errorCode != oldDataset.errorCode){
-      this.log("Landroid " + this.name + " error code changed to " + this.dataset.errorCode + " (" + this.dataset.errorDescription + ")");
+      this.log("Landroid " + this.name + " error code changed to " + this.dataset.errorCode + " (" + this.dataset.errorDescription + ")" + ", battery level now " + this.dataset.batteryLevel);
       this.accessory.getService(Service.ContactSensor).getCharacteristic(Characteristic.ContactSensorState).updateValue(isError(this.dataset.errorCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
       if(this.config.rainsensor && this.accessory.getService(Service.LeakSensor)) this.accessory.getService(Service.LeakSensor).getCharacteristic(Characteristic.LeakDetected).updateValue(this.dataset.errorCode == 5);
     }
