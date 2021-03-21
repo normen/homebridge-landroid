@@ -176,20 +176,8 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
     this.dataset = new LandroidDataset(data);
     // this.log("landroidUpdate ran with RSSI " + this.dataset.wifiQuality + ", battery temperature " + this.dataset.batteryTemperature);
     if(mowdata){
-      if(oldDataset.totalTime != null && oldDataset.totalTime != undefined){
-        if(this.dataset.totalTime != oldDataset.totalTime){
-          totalTime = Number(this.dataset.totalTime) - Number(oldDataset.totalTime);
-          this.log("Landroid " + this.name + " new minutes worked: " + String(totalTime) + ", battery level now " + this.dataset.batteryLevel);
-        }
-        if(this.dataset.totalBladeTime != oldDataset.totalBladeTime){
-          totalBladeTime = Number(this.dataset.totalBladeTime) - Number(oldDataset.totalBladeTime);
-          this.log("Landroid " + this.name + " new minutes mowed: " + String(totalBladeTime));
-        }
-        if(this.dataset.totalDistance != oldDataset.totalDistance){
-          totalDistance = Number(this.dataset.totalDistance) - Number(oldDataset.totalDistance);
-          this.log("Landroid " + this.name + " new distance moved: " + String(totalDistance) + "m");
-        }
-      }else{
+      if(oldDataset.totalTime == null || oldDataset.totalTime == undefined){
+         // Initialise mowing data
         totalTime = Number(this.dataset.totalTime) / 60;
         totalTime = totalTime.toFixed(2);
         this.log("Landroid " + this.name + " hours worked so far: " + String(totalTime));
@@ -198,6 +186,7 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
         this.log("Landroid " + this.name + " hours mowed so far: " + String(totalBladeTime));
         totalDistance = Number(this.dataset.totalDistance) / 1000;
         this.log("Landroid " + this.name + " distance moved so far: " + String(totalDistance) + "km");
+        let mowDataset = this.dataset;
       }
     }
     if(this.dataset.batteryLevel != oldDataset.batteryLevel){
@@ -214,6 +203,18 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
         this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).updateValue(true);
       }else{
         this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).updateValue(false);
+      }
+      if(this.dataset.statusCode == 1 && oldDataset.totalTime != null && oldDataset.totalTime != undefined) {
+        // Landroid has just arrived home so show how much it's worked since last leaving (or restarting Homebridge)
+        totalTime = (Number(this.dataset.totalTime) - Number(mowDataset.totalTime)) / 60;
+        totalTime = totalTime.toFixed(2);
+        this.log("Landroid " + this.name + " new minutes worked: " + String(totalTime) + ", battery level now " + this.dataset.batteryLevel);
+        totalBladeTime = (Number(this.dataset.totalBladeTime) - Number(mowDataset.totalBladeTime)) / 60;
+        totalBladeTime = totalBladeTime.toFixed(2);
+        this.log("Landroid " + this.name + " new minutes mowed: " + String(totalBladeTime));
+        totalDistance = (Number(this.dataset.totalDistance) - Number(mowDataset.totalDistance));
+        this.log("Landroid " + this.name + " new distance moved: " + String(totalDistance) + "m");
+        let mowDataset = this.dataset;
       }
     }
     if(this.dataset.errorCode != oldDataset.errorCode){
