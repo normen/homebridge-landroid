@@ -92,7 +92,7 @@ LandroidDataset.ERROR_CODES = {
     14: 'Charge error',
     15: 'Timeout finding home',
     16: 'Mower locked',
-    17: 'Battery over temperature',
+    17: 'Battery temperature out of range',
 };
 
 module.exports = LandroidDataset;
