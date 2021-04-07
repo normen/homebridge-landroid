@@ -1,6 +1,0 @@
-node_modules/
-.homebridge/
-package-lock.json
-.tern-project
-tags
-.DS_Store
