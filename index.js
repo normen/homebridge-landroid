@@ -8,6 +8,7 @@ function LandroidPlatform(log, config, api) {
   this.log = log;
   this.debug = config.debug || false;
   this.mowdata = config.mowdata || false;
+  this.cloud = config.cloud || "worx";
   this.accessories = [];
   this.cloudMowers = [];
 
@@ -32,7 +33,7 @@ function LandroidPlatform(log, config, api) {
       });
       self.accessories = [];
     }
-    self.landroidAdapter = {"log": new LandroidLogger(log)};
+    self.landroidAdapter = {"log": new LandroidLogger(log), "config":{"server":self.cloud}};
     self.landroidCloud = new LandroidCloud(config.email, config.pwd, self.landroidAdapter);
     self.landroidCloud.on("mqtt", self.landroidUpdate.bind(self));
     self.landroidCloud.on("found", self.landroidFound.bind(self));

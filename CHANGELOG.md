@@ -3,6 +3,10 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
+## 0.9.2
+- fix https error
+- possibly allow using kress and landxcape models
+
 ## 0.9.1
 - downgrade/fix version of iobroker.worx library to 1.0.2
 
@@ -10,8 +14,8 @@ For documentation please see the [README](https://github.com/normen/homebridge-l
 - added mowing data option (thanks andy-dinger!)
 - small cleanups and UI improvements
 - add development infos
-
 ## 0.8.1
+
 - fix name of rain sensor
 
 ## 0.8.0
