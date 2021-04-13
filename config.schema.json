@@ -15,6 +15,14 @@
       "type": "string",
       "required": true
     },
+    "cloud":{
+      "title": "Cloud Type",
+      "description": "The used cloud - worx, kress or landxcape",
+      "type": "string",
+      "placeholder": "worx",
+      "default": "worx",
+      "required": false
+    },
     "rainsensor":{
       "title": "Enable rain sensor",
       "description": "Adds a 'Leak' sensor that shows the state of the mowers rain sensor. Note that you might have to reload all mowers once to enable this.",
@@ -50,6 +58,7 @@
       "expanded": false,
       "title": "Advanced",
       "items": [
+        "cloud",
         "reload",
         "mowdata",
         "debug"
