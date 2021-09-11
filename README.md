@@ -1,5 +1,5 @@
 # homebridge-landroid [![NPM Version](https://img.shields.io/npm/v/homebridge-landroid.svg)](https://www.npmjs.com/package/homebridge-landroid) [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
-Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud, supports most Landroid mowers.
+Homebridge plugin to control Worx Landroid (as well as Kress and Landxcape) lawn mowers through the Worx Cloud, supports most Landroid mowers.
 
 ## Features
  - Automatically fetches all mowers from Worx Cloud
@@ -37,6 +37,7 @@ Homebridge plugin to control Worx Landroid lawn mowers through the Worx Cloud, s
  - `email` eMail for your Worx account
  - `pwd` Password for your Worx account
  - `rainsensor` Adds an additional "Leak" sensor for rain detection
+ - `partyswitch` Adds an additional "PartyMode" switch to temporarily disable the schedule
  - `reload` Clears all mowers in HomeKit and reloads them from the cloud, default `false`
  - `cloud` Sets the cloud to use, `worx`, `kress` or `landxcape`, default `worx`
  - `debug` Enable additional debug log output, default `false`

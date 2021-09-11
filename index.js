@@ -6,6 +6,7 @@ var LandroidDataset = require('./LandroidDataset');
 function LandroidPlatform(log, config, api) {
   this.config = config;
   this.log = log;
+  this.partymode = config.partymode || false;
   this.debug = config.debug || false;
   this.mowdata = config.mowdata || false;
   this.cloud = config.cloud || "worx";
@@ -138,6 +139,7 @@ function LandroidAccessory(platform, name, serial, accessory) {
       this.accessory.addService(new Service.BatteryService());
       this.accessory.addService(new Service.ContactSensor("Landroid " + name + " Problem"));
       if(this.config.rainsensor) this.accessory.addService(new Service.LeakSensor("Landroid " + name + " Rain"));
+      if(this.config.partymode) this.accessory.addService(new Service.Switch("Landroid " + name + " PartyMode", "PartySwitch"));
     }
 
     this.name = this.accessory.context.name;
@@ -149,8 +151,14 @@ function LandroidAccessory(platform, name, serial, accessory) {
     this.dataset.statusCode = 0;
     this.dataset.errorCode = 0;
 
-    this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).on('get', this.getOn.bind(this));
-    this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).on('set', this.setOn.bind(this));
+    if(this.accessory.getService("Landroid " + name)){
+      this.accessory.getService("Landroid " + name).getCharacteristic(Characteristic.On).on('get', this.getOn.bind(this));
+      this.accessory.getService("Landroid " + name).getCharacteristic(Characteristic.On).on('set', this.setOn.bind(this));
+    } else{
+      this.log("Fallback for On/Off switch");
+      this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).on('get', this.getOn.bind(this));
+      this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).on('set', this.setOn.bind(this));
+    }
 
     this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.BatteryLevel).on('get', this.getBatteryLevel.bind(this));
     this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.StatusLowBattery).on('get', this.getStatusLowBattery.bind(this));
@@ -165,6 +173,12 @@ function LandroidAccessory(platform, name, serial, accessory) {
       .setCharacteristic(Characteristic.SerialNumber, this.serial);
 
     if(this.config.rainsensor && this.accessory.getService(Service.LeakSensor)) this.accessory.getService(Service.LeakSensor).on('get', this.getLeak.bind(this));
+    if(this.config.partymode && this.accessory.getService("PartySwitch")) {
+      this.accessory.getService("PartySwitch").getCharacteristic(Characteristic.On).on('get', this.getPartyMode.bind(this));
+      this.accessory.getService("PartySwitch").getCharacteristic(Characteristic.On).on('set', this.setPartyMode.bind(this));
+    } else if(this.config.partymode) {
+      this.log("Party switch not found");
+    }
 }
 
 LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
@@ -194,6 +208,11 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
     if(this.dataset.batteryLevel != oldDataset.batteryLevel){
     //  this.log("Landroid " + this.name + " battery level changed to " + this.dataset.batteryLevel);
       this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.BatteryLevel).updateValue(this.dataset.batteryLevel);
+    }
+    if(this.dataset.partyMode != oldDataset.partyMode){
+      if(this.accessory.getService("PartySwitch")){
+       this.accessory.getService("PartySwitch").getCharacteristic(Characteristic.On).updateValue(this.dataset.partyMode);
+      }
     }
     if(this.dataset.batteryCharging != oldDataset.batteryCharging){
       this.log("Landroid " + this.name + " charging status changed to " + this.dataset.batteryCharging 
@@ -265,6 +284,27 @@ LandroidAccessory.prototype.setOn = function(state, callback) {
   }
   callback(null);
 }
+LandroidAccessory.prototype.getPartyMode = function(callback) {
+  if(this.dataset.partyMode) {
+    callback(null, true);
+  }else{
+    callback(null, false);
+  }
+}
+LandroidAccessory.prototype.setPartyMode = function(state, callback) {
+  if(!this.serial){
+    this.log("Error: Mower has not been configured yet.");
+  }
+  let outMsg = "";
+  if (state) {
+    outMsg = '{"sc":{ "m":2, "distm": 0}}';
+  } else{
+    outMsg = '{"sc":{ "m":1, "distm": 0}}';
+  }
+  this.log("Sending to Landroid " + this.name + ": [" + outMsg + "] ("+this.serial+")");
+  this.landroidCloud.sendMessage(outMsg, this.serial);
+}
+
 LandroidAccessory.prototype.sendMessage = function(cmd, params) {
   if(!this.serial){
     this.log("Error: Mower has not been configured yet.");

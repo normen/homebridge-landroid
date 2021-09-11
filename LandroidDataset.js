@@ -14,6 +14,7 @@ LandroidDataset.prototype.parse = function(readings) {
         this.serialNumber = readings["cfg"]["sn"];
         if (readings["cfg"]["sc"]) {
             this.active = (readings["cfg"]["sc"]["m"] ? true : false);
+            this.partyMode = this.active && typeof(readings["cfg"]["sc"]["distm"]) !== 'undefined';
             this.timeExtension = Number(readings["cfg"]["sc"]["p"]).valueOf();
             if (readings["cfg"]["sc"]["d"]) {
                 this.schedule = [];

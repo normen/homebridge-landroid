@@ -29,6 +29,12 @@
       "type": "boolean",
       "required": false
     },
+    "partymode":{
+      "title": "Enable PartyMode switch",
+      "description": "Adds a switch that enables PartyMode on supported mowers",
+      "type": "boolean",
+      "required": false
+    },
     "reload":{
       "title": "Reload All Mowers",
       "description": "Clears and reloads all mowers from the cloud, set and reboot HomeBridge, then unset again.",
@@ -61,6 +67,7 @@
         "cloud",
         "reload",
         "mowdata",
+        "partymode",
         "debug"
       ]
     }
