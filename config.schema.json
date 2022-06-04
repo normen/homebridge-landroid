@@ -29,6 +29,12 @@
       "type": "boolean",
       "required": false
     },
+    "homesensor":{
+      "title": "Enable home sensor",
+      "description": "Adds a 'Home' sensor that shows the state of the mowers. If in home position sensor is closed. Note that you might have to reload all mowers once to enable this.",
+      "type": "boolean",
+      "required": false
+    },
     "partymode":{
       "title": "Enable PartyMode switch",
       "description": "Adds a switch that enables PartyMode on supported mowers",
@@ -58,6 +64,7 @@
     "email",
     "pwd",
     "rainsensor",
+    "homesensor",
     {
       "type": "section",
       "expandable": true,
