@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
+## 0.9.6
+- Added optional home sensor
+
 ## 0.9.5
 - fix for (untested) support for "Party Mode"
 
