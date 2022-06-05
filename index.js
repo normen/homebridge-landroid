@@ -258,7 +258,7 @@ LandroidAccessory.prototype.getContactSensorStateError = function(callback) {
   callback(null,  isError(this.dataset.errorCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
 }
 LandroidAccessory.prototype.getContactSensorStateHome = function(callback) {
-  callback(null,  isHome(this.dataset.errorCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
+  callback(null,  isHome(this.dataset.statusCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
 }
 LandroidAccessory.prototype.getBatteryLevel = function(callback) {
   callback(null, this.dataset.batteryLevel);
@@ -347,7 +347,7 @@ function isError(c){
 
 function isHome(c){
   //Home dectection
-  if(c == 1 ){
+  if(c == 1){
     return true;
   }else{
     return false;
