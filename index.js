@@ -137,8 +137,9 @@ function LandroidAccessory(platform, name, serial, accessory) {
 
       this.accessory.addService(new Service.Switch("Landroid " + name));
       this.accessory.addService(new Service.BatteryService());
-      this.accessory.addService(new Service.ContactSensor("Landroid " + name + " Problem"));
+      this.accessory.addService(new Service.ContactSensor("Landroid " + name + " Problem", "ErrorSensor"));
       if(this.config.rainsensor) this.accessory.addService(new Service.LeakSensor("Landroid " + name + " Rain"));
+      if(this.config.homesensor) this.accessory.addService(new Service.ContactSensor("Landroid " + name + " Home", "HomeSensor"));
       if(this.config.partymode) this.accessory.addService(new Service.Switch("Landroid " + name + " PartyMode", "PartySwitch"));
     }
 
@@ -164,7 +165,7 @@ function LandroidAccessory(platform, name, serial, accessory) {
     this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.StatusLowBattery).on('get', this.getStatusLowBattery.bind(this));
     this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.ChargingState).on('get', this.getChargingState.bind(this));
 
-    this.accessory.getService(Service.ContactSensor).getCharacteristic(Characteristic.ContactSensorState).on('get', this.getContactSensorState.bind(this));
+    this.accessory.getService("ErrorSensor").getCharacteristic(Characteristic.ContactSensorState).on('get', this.getContactSensorStateError.bind(this));
 
     this.accessory.getService(Service.AccessoryInformation)
       .setCharacteristic(Characteristic.Name, this.name)
@@ -173,6 +174,7 @@ function LandroidAccessory(platform, name, serial, accessory) {
       .setCharacteristic(Characteristic.SerialNumber, this.serial);
 
     if(this.config.rainsensor && this.accessory.getService(Service.LeakSensor)) this.accessory.getService(Service.LeakSensor).on('get', this.getLeak.bind(this));
+    if(this.config.homesensor && this.accessory.getService("HomeSensor")) this.accessory.getService("HomeSensor").getCharacteristic(Characteristic.ContactSensorState).on('get', this.getContactSensorStateHome.bind(this));
     if(this.config.partymode && this.accessory.getService("PartySwitch")) {
       this.accessory.getService("PartySwitch").getCharacteristic(Characteristic.On).on('get', this.getPartyMode.bind(this));
       this.accessory.getService("PartySwitch").getCharacteristic(Characteristic.On).on('set', this.setPartyMode.bind(this));
@@ -225,6 +227,7 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
         + ", battery level " + this.dataset.batteryLevel);
       if(isOn(this.dataset.statusCode)){
         this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).updateValue(true);
+        if(this.config.homesensor && this.accessory.getService("HomeSensor")) this.accessory.getService("HomeSensor").getCharacteristic(Characteristic.ContactSensorState).updateValue(Characteristic.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
       }else{
         this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).updateValue(false);
       }
@@ -239,19 +242,23 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
         this.saveTime = totalTime;
         this.saveBladeTime = totalBladeTime;
         this.saveDistance = totalDistance;
+        if(this.config.homesensor && this.accessory.getService("HomeSensor")) this.accessory.getService("HomeSensor").getCharacteristic(Characteristic.ContactSensorState).updateValue(Characteristic.ContactSensorState.CONTACT_DETECTED);
       }
     }
     if(this.dataset.errorCode != oldDataset.errorCode){
       this.log("Landroid " + this.name + " error code changed to " + this.dataset.errorCode + " (" + this.dataset.errorDescription + ")" 
         + ", battery level " + this.dataset.batteryLevel);
-      this.accessory.getService(Service.ContactSensor).getCharacteristic(Characteristic.ContactSensorState).updateValue(isError(this.dataset.errorCode)?
+      this.accessory.getService("ErrorSensor").getCharacteristic(Characteristic.ContactSensorState).updateValue(isError(this.dataset.errorCode)?
         Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
       if(this.config.rainsensor && this.accessory.getService(Service.LeakSensor)) this.accessory.getService(Service.LeakSensor).getCharacteristic(Characteristic.LeakDetected).updateValue(this.dataset.errorCode == 5);
     }
   }
 }
-LandroidAccessory.prototype.getContactSensorState = function(callback) {
+LandroidAccessory.prototype.getContactSensorStateError = function(callback) {
   callback(null,  isError(this.dataset.errorCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
+}
+LandroidAccessory.prototype.getContactSensorStateHome = function(callback) {
+  callback(null,  isHome(this.dataset.errorCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
 }
 LandroidAccessory.prototype.getBatteryLevel = function(callback) {
   callback(null, this.dataset.batteryLevel);
@@ -335,6 +342,15 @@ function isError(c){
     return false;
   }else{
     return true;
+  }
+}
+
+function isHome(c){
+  //Home dectection
+  if(c == 1 ){
+    return true;
+  }else{
+    return false;
   }
 }
 
