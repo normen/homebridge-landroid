@@ -8,6 +8,8 @@ Homebridge plugin to control Worx Landroid (as well as Kress and Landxcape) lawn
  - Mowing status (on / off)
  - Battery Status
  - Error status
+ - Rain status
+ - Home status
 
 ## Installation
 1. Install homebridge using: npm install -g homebridge
