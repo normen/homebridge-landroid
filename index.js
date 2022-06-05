@@ -242,8 +242,8 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
         this.saveTime = totalTime;
         this.saveBladeTime = totalBladeTime;
         this.saveDistance = totalDistance;
-        if(this.config.homesensor && this.accessory.getService("HomeSensor")) this.accessory.getService("HomeSensor").getCharacteristic(Characteristic.ContactSensorState).updateValue(Characteristic.ContactSensorState.CONTACT_DETECTED);
       }
+      if(this.dataset.statusCode == 1 && this.config.homesensor && this.accessory.getService("HomeSensor")) this.accessory.getService("HomeSensor").getCharacteristic(Characteristic.ContactSensorState).updateValue(Characteristic.ContactSensorState.CONTACT_DETECTED);
     }
     if(this.dataset.errorCode != oldDataset.errorCode){
       this.log("Landroid " + this.name + " error code changed to " + this.dataset.errorCode + " (" + this.dataset.errorDescription + ")" 
