@@ -227,7 +227,7 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
         + ", battery level " + this.dataset.batteryLevel);
       if(isOn(this.dataset.statusCode)){
         this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).updateValue(true);
-        if(this.config.homesensor && this.accessory.getService("HomeSensor")) this.accessory.getService("HomeSensor").getCharacteristic(Characteristic.ContactSensorState).updateValue(Characteristic.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+        if(this.config.homesensor && this.accessory.getService("HomeSensor")) this.accessory.getService("HomeSensor").getCharacteristic(Characteristic.ContactSensorState).updateValue(Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
       }else{
         this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).updateValue(false);
       }
@@ -258,7 +258,7 @@ LandroidAccessory.prototype.getContactSensorStateError = function(callback) {
   callback(null,  isError(this.dataset.errorCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
 }
 LandroidAccessory.prototype.getContactSensorStateHome = function(callback) {
-  callback(null,  isHome(this.dataset.statusCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
+  callback(null,  isHome(this.dataset.statusCode)?Characteristic.ContactSensorState.CONTACT_DETECTED:Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
 }
 LandroidAccessory.prototype.getBatteryLevel = function(callback) {
   callback(null, this.dataset.batteryLevel);
@@ -346,7 +346,7 @@ function isError(c){
 }
 
 function isHome(c){
-  //Home dectection
+  //Home detection
   if(c == 1){
     return true;
   }else{
