@@ -57,6 +57,8 @@ The contact sensor is used to display issues with the mower (trapped, outside wi
 
 #### Home Sensor
 The home (contact) sensor is used to display if the mower is standing in home position, when the contact sensor is "open" the mower is currently not at home.
+Note: If you update from Version <= 0.9.5 or enable the sensor after first setup then you need to reload all mowers.
+      This also invalids your homekit automations which need to be reconfigured.
 
 #### Battery Status
 You can see the battery status in the settings of either the switch or contact sensor in the Home app and you can ask Siri about the battery status of your lawn mower.
