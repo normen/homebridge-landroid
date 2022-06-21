@@ -165,8 +165,12 @@ function LandroidAccessory(platform, name, serial, accessory) {
     this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.StatusLowBattery).on('get', this.getStatusLowBattery.bind(this));
     this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.ChargingState).on('get', this.getChargingState.bind(this));
 
-    this.accessory.getService("ErrorSensor").getCharacteristic(Characteristic.ContactSensorState).on('get', this.getContactSensorStateError.bind(this));
-
+    if(this.accessory.getService("ErrorSensor")){
+      this.accessory.getService("ErrorSensor").getCharacteristic(Characteristic.ContactSensorState).on('get', this.getContactSensorStateError.bind(this));
+    } else{
+      this.accessory.getService(Service.ContactSensor).getCharacteristic(Characteristic.ContactSensorState).on('get', this.getContactSensorStateError.bind(this));
+    }
+  
     this.accessory.getService(Service.AccessoryInformation)
       .setCharacteristic(Characteristic.Name, this.name)
       .setCharacteristic(Characteristic.Manufacturer, 'Worx')
@@ -248,27 +252,38 @@ LandroidAccessory.prototype.landroidUpdate = function(mower, data, mowdata) {
     if(this.dataset.errorCode != oldDataset.errorCode){
       this.log("Landroid " + this.name + " error code changed to " + this.dataset.errorCode + " (" + this.dataset.errorDescription + ")" 
         + ", battery level " + this.dataset.batteryLevel);
-      this.accessory.getService("ErrorSensor").getCharacteristic(Characteristic.ContactSensorState).updateValue(isError(this.dataset.errorCode)?
+      if(this.accessory.getService("ErrorSensor")){
+        this.accessory.getService("ErrorSensor").getCharacteristic(Characteristic.ContactSensorState).updateValue(isError(this.dataset.errorCode)?
         Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
+      } else{
+        this.accessory.getService(Service.ContactSensor).getCharacteristic(Characteristic.ContactSensorState).updateValue(isError(this.dataset.errorCode)?
+        Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
+      }    
       if(this.config.rainsensor && this.accessory.getService(Service.LeakSensor)) this.accessory.getService(Service.LeakSensor).getCharacteristic(Characteristic.LeakDetected).updateValue(this.dataset.errorCode == 5);
     }
   }
 }
+
 LandroidAccessory.prototype.getContactSensorStateError = function(callback) {
   callback(null,  isError(this.dataset.errorCode)?Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
 }
+
 LandroidAccessory.prototype.getContactSensorStateHome = function(callback) {
   callback(null,  this.dataset.statusCode == 1?Characteristic.ContactSensorState.CONTACT_DETECTED:Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
 }
+
 LandroidAccessory.prototype.getBatteryLevel = function(callback) {
   callback(null, this.dataset.batteryLevel);
 }
+
 LandroidAccessory.prototype.getChargingState = function(callback) {
   callback(null, this.dataset.batteryCharging?Characteristic.ChargingState.CHARGING:Characteristic.ChargingState.NOT_CHARGING);
 }
+
 LandroidAccessory.prototype.getStatusLowBattery = function(callback) {
   callback(null, this.dataset.errorCode == 12?Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW:Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
 }
+
 LandroidAccessory.prototype.getOn = function(callback) {
   if(isOn(this.dataset.statusCode)){
     callback(null, true);
@@ -276,6 +291,7 @@ LandroidAccessory.prototype.getOn = function(callback) {
     callback(null, false);
   }
 }
+
 LandroidAccessory.prototype.getLeak = function(callback) {
   if(this.dataset.statusCode == 5){
     callback(null, true);
@@ -283,6 +299,7 @@ LandroidAccessory.prototype.getLeak = function(callback) {
     callback(null, false);
   }
 }
+
 LandroidAccessory.prototype.setOn = function(state, callback) {
   if(state){
     this.sendMessage(1);
@@ -291,6 +308,7 @@ LandroidAccessory.prototype.setOn = function(state, callback) {
   }
   callback(null);
 }
+
 LandroidAccessory.prototype.getPartyMode = function(callback) {
   if(this.dataset.partyMode) {
     callback(null, true);
@@ -298,6 +316,7 @@ LandroidAccessory.prototype.getPartyMode = function(callback) {
     callback(null, false);
   }
 }
+
 LandroidAccessory.prototype.setPartyMode = function(state, callback) {
   if(!this.serial){
     this.log("Error: Mower has not been configured yet.");
