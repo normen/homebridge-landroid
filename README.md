@@ -8,6 +8,8 @@ Homebridge plugin to control Worx Landroid (as well as Kress and Landxcape) lawn
  - Mowing status (on / off)
  - Battery Status
  - Error status
+ - Rain status
+ - Home status
 
 ## Installation
 1. Install homebridge using: npm install -g homebridge
@@ -37,6 +39,7 @@ Homebridge plugin to control Worx Landroid (as well as Kress and Landxcape) lawn
  - `email` eMail for your Worx account
  - `pwd` Password for your Worx account
  - `rainsensor` Adds an additional "Leak" sensor for rain detection
+ - `homesensor` Adds an additional "Home" sensor for home detection
  - `partyswitch` Adds an additional "PartyMode" switch to temporarily disable the schedule
  - `reload` Clears all mowers in HomeKit and reloads them from the cloud, default `false`
  - `cloud` Sets the cloud to use, `worx`, `kress` or `landxcape`, default `worx`
@@ -51,6 +54,11 @@ The switch shows the current status and allows to control the mower. If the swit
 
 #### Contact Sensor
 The contact sensor is used to display issues with the mower (trapped, outside wire etc.), when the contact sensor is "open" there is some issue that prevents the mower from continuing. Fix the issue to control the mower again.
+
+#### Home Sensor
+The home (contact) sensor is used to display if the mower is standing in home position, when the contact sensor is "open" the mower is currently not at home.
+
+Note: If you update from Version <= 0.9.5 or enable the sensor after first setup then you need to reload all mowers. This also invalids your homekit automations which need to be reconfigured.
 
 #### Battery Status
 You can see the battery status in the settings of either the switch or contact sensor in the Home app and you can ask Siri about the battery status of your lawn mower.
