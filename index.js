@@ -24,7 +24,7 @@ function LandroidPlatform(log, config, api) {
   // Listen to event "didFinishLaunching", this means homebridge already finished loading cached accessories.
   // Platform Plugin should only register new accessory that doesn't exist in homebridge after this event.
   // Or start discover new accessories.
-  this.api.on('didFinishLaunching', function () {
+  this.api.on('didFinishLaunching', async function () {
     self.log('DidFinishLaunching');
     if(self.config.reload){
       self.log('**** WARNING: Landroid plugin is in reload mode, mowers will be recreated each boot ****');
@@ -34,7 +34,7 @@ function LandroidPlatform(log, config, api) {
       });
       self.accessories = [];
     }
-    self.landroidAdapter = {"log": new LandroidLogger(log), "config":{"server":self.cloud}};
+    self.landroidAdapter = {"log": new LandroidLogger(log), "config":{"server":self.cloud}, "setStateAsync": function(data){console.log(data)}};
     self.landroidCloud = new LandroidCloud(config.email, config.pwd, self.landroidAdapter);
     self.landroidCloud.on("mqtt", self.landroidUpdate.bind(self));
     self.landroidCloud.on("found", self.landroidFound.bind(self));
@@ -54,6 +54,7 @@ function LandroidPlatform(log, config, api) {
     self.accessories.forEach(accessory=>{
       accessory.landroidCloud = self.landroidCloud;
     });
+    await self.landroidCloud.login();
   });
 }
 

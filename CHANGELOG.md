@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
+## 0.9.9
+- Fix cloud login (no data yet)
+
 ## 0.9.8
 - Update worx library to fix 404 Error
 
