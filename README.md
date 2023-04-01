@@ -72,3 +72,5 @@ If you want new features or improve the plugin, you're very welcome to do so. Th
 - add `config.json` with appropriate content to `.homebridge` folder
 - run `npm run test` to start the homebridge instance for testing
 
+#### Notes
+Most of the connector code is directly copied from [iobroker.worx](https://github.com/iobroker-community-adapters/ioBroker.worx), a helper script called 'sync-code' allows updating to the latest version of that code.

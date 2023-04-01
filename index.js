@@ -1,4 +1,11 @@
 "use strict";
+/*
+ * Landroid Worx plugin for HomeBridge
+ *
+ * CloudConnector and all files in the lib folder are copied from
+ * https://github.com/iobroker-community-adapters/ioBroker.worx
+ *
+ */
 var Accessory, Service, Characteristic, UUIDGen;
 var CloudConnector = require('./CloudConnector');
 var LandroidDataset = require('./LandroidDataset');
@@ -34,7 +41,7 @@ function LandroidPlatform(log, config, api) {
       });
       self.accessories = [];
     }
-    self.landroidCloud = new CloudConnector({});
+    self.landroidCloud = CloudConnector();
     self.accessories.forEach(accessory=>{
       accessory.landroidCloud = self.landroidCloud;
     });
@@ -44,63 +51,28 @@ function LandroidPlatform(log, config, api) {
       "server": config.cloud || "worx"
     }
     self.landroidCloud.log = new LandroidLogger(log);
-    self.landroidCloud.setState = function(state, value) {
-    };
     self.landroidCloud.setStateAsync = async function(objectname, object) {
-      //self.log("SETSTATEASYNC");
       if(objectname == "info.connection" && object == true){
         self.landroidCloud.getDeviceList();
       } else if(objectname.includes(".mower.")){
         let serial = objectname.substring(0, objectname.indexOf("."));
         let item = objectname.split('.').pop();
         if(object && object.val){
-          //self.log(objectname + " - " + object);
           self.landroidUpdate(serial, item, object.val);
         }
       }
-      //self.log(objectname + " - " + object);
-    };
-    self.landroidCloud.getStateAsync = async function(objectname) {
-      //self.log("GETOBJECTASYNC");
-      //self.log(objectname);
-      return {};
-    };
-    self.landroidCloud.getObjectAsync = async function(objectname) {
-      //self.log("GETOBJECTASYNC");
-      //self.log(objectname);
-      return {};
     };
     self.landroidCloud.setObjectNotExistsAsync = async function(objectname, object) {
-      //self.log("SETOBJECTNOTEXISTSASYNC");
-      //self.log(objectname);
-      //self.log(object);
       if(!objectname.includes(".")){
         self.landroidFound(object.common.name, objectname);
       } else if(objectname.includes(".mower.")){
         let serial = objectname.substring(0, objectname.indexOf("."));
         let item = objectname.split('.').pop();
         if(object && object.val){
-          //self.log(objectname + " - " + object);
           self.landroidUpdate(serial, item, object.val);
         }
       }
     };
-    self.landroidCloud.extendObjectAsync = async function(objectname, object) {
-      //self.log("EXTENDOBJECTASYNC");
-      //self.log(objectname);
-      //self.log(object);
-    };
-    self.landroidCloud.setForeignObjectAsync = async function(objectname, object) {
-      //self.log("SETFOREIGNOBJECTASYNC");
-      //self.log(objectname);
-      //self.log(object);
-    };
-    self.landroidCloud.delForeignObjectAsync = async function(objectname) {
-      //self.log("DELFOREIGNOBJECTASYNC");
-      //self.log(objectname);
-      //self.log(object);
-    };
-    self.landroidCloud.subscribeStates = function(states){};
     self.landroidCloud.setInterval = function(funct,delay){
       setInterval(funct.bind(self.landroidCloud), delay);
     };
@@ -163,7 +135,7 @@ LandroidPlatform.prototype.landroidFound = function(name, serial) {
 
 LandroidPlatform.prototype.landroidUpdate = function(serial, item, data) {
     if(this.debug && data) {
-      this.log("[DEBUG] DATA: " + JSON.stringify(data));
+      this.log("[DEBUG] DATA: " + item + ": " + JSON.stringify(data));
     }
     this.accessories.forEach(accessory=>{
         accessory.landroidUpdate(serial, item, data, this.mowdata);

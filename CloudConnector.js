@@ -2,12 +2,9 @@
 
 /*
  * Created with @iobroker/create-adapter v2.3.0
- *
- * Copied from https://github.com/iobroker-community-adapters/ioBroker.worx
- * with minimal adaptations
  */
 
-//const utils = require("@iobroker/adapter-core");
+const Adapter = require("./CloudAdapter");
 const axios = require("axios").default;
 const awsIot = require("aws-iot-device-sdk").device;
 // const qs = require("qs");
@@ -25,18 +22,18 @@ const ping_interval = 1000 * 60 * 10; //10 Minutes
 const pingMqtt = true;
 const max_request = 20;
 
-class Worx {
+class Worx extends Adapter {
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
      */
     constructor(options) {
-        //super({
-            //...options,
-            //name: "worx",
-        //});
-        //this.on("ready", this.onReady.bind(this));
-        //this.on("stateChange", this.onStateChange.bind(this));
-        //this.on("unload", this.onUnload.bind(this));
+        super({
+            ...options,
+            name: "worx",
+        });
+        this.on("ready", this.onReady.bind(this));
+        this.on("stateChange", this.onStateChange.bind(this));
+        this.on("unload", this.onUnload.bind(this));
         this.deviceArray = [];
         this.fw_available = {};
         this.laststatus = {};
@@ -1856,14 +1853,13 @@ class Worx {
     }
 }
 
-//if (require.main !== module) {
+if (require.main !== module) {
     // Export the constructor in compact mode
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
      */
-    //module.exports = (options) => new Worx(options);
-//} else {
+    module.exports = (options) => new Worx(options);
+} else {
     // otherwise start the instance directly
-    //new Worx();
-//}
-module.exports = Worx;
+    new Worx();
+}

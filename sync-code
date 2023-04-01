@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+curl -o CloudConnector.js https://raw.githubusercontent.com/iobroker-community-adapters/ioBroker.worx/master/main.js
+curl -o lib/helper.js https://raw.githubusercontent.com/iobroker-community-adapters/ioBroker.worx/master/lib/helper.js
+curl -o lib/objects.js https://raw.githubusercontent.com/iobroker-community-adapters/ioBroker.worx/master/lib/objects.js
+sed -i 's/extends utils.Adapter/extends Adapter/g' CloudConnector.js
+sed -i 's/const utils .*adapter-core/const Adapter = require\(".\/CloudAdapter/g' CloudConnector.js
