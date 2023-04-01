@@ -198,7 +198,7 @@ function LandroidAccessory(platform, name, serial, accessory) {
     this.serial = this.accessory.context.serial;
 
     this.dataset = {};
-    this.dataset.batteryLevel = 0;
+    this.dataset.batteryState = 0;
     this.dataset.batteryCharging = false;
     this.dataset.statusCode = 0;
     this.dataset.errorCode = 0;
@@ -262,9 +262,9 @@ LandroidAccessory.prototype.landroidUpdate = function(serial, item, data, mowdat
           + ", distance moved so far: " + String(this.saveDistance / 1000) + "km");
       }
     }
-    if(this.dataset.batteryLevel != oldDataset.batteryLevel){
-    //  this.log("Landroid " + this.name + " battery level changed to " + this.dataset.batteryLevel);
-      this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.BatteryLevel).updateValue(this.dataset.batteryLevel);
+    if(this.dataset.batteryState != oldDataset.batteryState){
+    //  this.log("Landroid " + this.name + " battery level changed to " + this.dataset.batteryState);
+      this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.BatteryLevel).updateValue(this.dataset.batteryState);
     }
     if(this.dataset.partyMode != oldDataset.partyMode){
       if(this.accessory.getService("PartySwitch")){
@@ -273,13 +273,13 @@ LandroidAccessory.prototype.landroidUpdate = function(serial, item, data, mowdat
     }
     if(this.dataset.batteryCharging != oldDataset.batteryCharging){
       this.log("Landroid " + this.name + " charging status changed to " + this.dataset.batteryCharging 
-        + ", battery level " + this.dataset.batteryLevel);
+        + ", battery level " + this.dataset.batteryState);
       this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.ChargingState).updateValue(this.dataset.batteryCharging?
         Characteristic.ChargingState.CHARGING:Characteristic.ChargingState.NOT_CHARGING);
     }
     if(this.dataset.statusCode != oldDataset.statusCode){
       this.log("Landroid " + this.name + " status changed to " + this.dataset.statusCode + " (" + this.dataset.statusDescription + ")" 
-        + ", battery level " + this.dataset.batteryLevel);
+        + ", battery level " + this.dataset.batteryState);
       if(isOn(this.dataset.statusCode)){
         this.accessory.getService(Service.Switch).getCharacteristic(Characteristic.On).updateValue(true);
         if(this.config.homesensor && this.accessory.getService("HomeSensor")) this.accessory.getService("HomeSensor").getCharacteristic(Characteristic.ContactSensorState).updateValue(Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
@@ -302,7 +302,7 @@ LandroidAccessory.prototype.landroidUpdate = function(serial, item, data, mowdat
     }
     if(this.dataset.errorCode != oldDataset.errorCode){
       this.log("Landroid " + this.name + " error code changed to " + this.dataset.errorCode + " (" + this.dataset.errorDescription + ")" 
-        + ", battery level " + this.dataset.batteryLevel);
+        + ", battery level " + this.dataset.batteryState);
       if(this.accessory.getService("ErrorSensor")){
         this.accessory.getService("ErrorSensor").getCharacteristic(Characteristic.ContactSensorState).updateValue(isError(this.dataset.errorCode)?
         Characteristic.ContactSensorState.CONTACT_NOT_DETECTED:Characteristic.ContactSensorState.CONTACT_DETECTED);
@@ -324,7 +324,7 @@ LandroidAccessory.prototype.getContactSensorStateHome = function(callback) {
 }
 
 LandroidAccessory.prototype.getBatteryLevel = function(callback) {
-  callback(null, this.dataset.batteryLevel);
+  callback(null, this.dataset.batteryState);
 }
 
 LandroidAccessory.prototype.getChargingState = function(callback) {
