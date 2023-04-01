@@ -1,8 +1,8 @@
 # homebridge-landroid [![NPM Version](https://img.shields.io/npm/v/homebridge-landroid.svg)](https://www.npmjs.com/package/homebridge-landroid) [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
-Homebridge plugin to control Worx Landroid (as well as Kress and Landxcape) lawn mowers through the Worx Cloud, supports most Landroid mowers.
+Homebridge plugin to control Worx Landroid (as well as Kress, Ferrex and Landxcape) lawn mowers through the Cloud, should support most mowers.
 
 ## Features
- - Automatically fetches all mowers from Worx Cloud
+ - Automatically fetches all mowers from Cloud
  - Start mower
  - Return mower to home
  - Mowing status (on / off)
@@ -42,7 +42,7 @@ Homebridge plugin to control Worx Landroid (as well as Kress and Landxcape) lawn
  - `homesensor` Adds an additional "Home" sensor for home detection
  - `partyswitch` Adds an additional "PartyMode" switch to temporarily disable the schedule
  - `reload` Clears all mowers in HomeKit and reloads them from the cloud, default `false`
- - `cloud` Sets the cloud to use, `worx`, `kress` or `landxcape`, default `worx`
+ - `cloud` Sets the cloud to use, `worx`, `kress`, `ferrex` or `landxcape`, default `worx`
  - `debug` Enable additional debug log output, default `false`
  - `mowdata` Enable additional mowing data log output, default `false`
 
