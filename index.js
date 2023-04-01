@@ -245,6 +245,9 @@ LandroidAccessory.prototype.landroidUpdate = function(serial, item, data, mowdat
 
   if(data != null && data != undefined){
     let oldDataset = this.dataset;
+    if(item == "status") {
+      item = "statusCode";
+    }
     this.dataset[item] = data;
     // this.log("landroidUpdate ran with RSSI " + this.dataset.wifiQuality + ", battery temperature " + this.dataset.batteryTemperature);
     if(mowdata){
