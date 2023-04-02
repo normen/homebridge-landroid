@@ -76,6 +76,9 @@ function LandroidPlatform(log, config, api) {
     self.landroidCloud.setInterval = function(funct,delay){
       setInterval(funct.bind(self.landroidCloud), delay);
     };
+    self.landroidCloud.setTimeout = function(funct,delay){
+      setTimeout(funct.bind(self.landroidCloud), delay);
+    };
     await self.landroidCloud.onReady();
   });
 }
