@@ -51,9 +51,10 @@ function LandroidPlatform(log, config, api) {
       "server": config.cloud || "worx"
     }
     self.landroidCloud.log = new LandroidLogger(log);
+    self.landroidCloud.log.isDebug = self.debug;
     self.landroidCloud.setStateAsync = async function(objectname, object) {
       if(objectname == "info.connection" && object == true){
-        self.landroidCloud.getDeviceList();
+        //await self.landroidCloud.getDeviceList();
       } else if(objectname.includes(".mower.")){
         let serial = objectname.substring(0, objectname.indexOf("."));
         let item = objectname.split('.').pop();
@@ -72,12 +73,6 @@ function LandroidPlatform(log, config, api) {
           self.landroidUpdate(serial, item, object.val);
         }
       }
-    };
-    self.landroidCloud.setInterval = function(funct,delay){
-      setInterval(funct.bind(self.landroidCloud), delay);
-    };
-    self.landroidCloud.setTimeout = function(funct,delay){
-      setTimeout(funct.bind(self.landroidCloud), delay);
     };
     await self.landroidCloud.onReady();
   });
@@ -118,7 +113,9 @@ LandroidPlatform.prototype.landroidFound = function(name, serial) {
   if(this.mowdata) {
     this.log("Mowing data logging enabled for Landroid " + name);
   }
-  this.cloudMowers.push(serial);
+  if(!this.cloudMowers.includes(serial)){
+    this.cloudMowers.push(serial);
+  }
   for(var i = 0; i<this.accessories.length; i++){
     const accessory = this.accessories[i];
     if(accessory.serial == serial){
@@ -400,6 +397,9 @@ function LandroidLogger(log){
     that.log(msg);
   }
   this.noLogMsg = function(msg){
+    if(this.isDebug){
+      that.log(msg);
+    }
   }
   this.trace = this.noLogMsg;
   this.debug = this.noLogMsg;
