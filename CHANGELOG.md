@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
+## 0.10.5
+- Small value reading fixes from upstream (iobroker.worx)
+
 ## 0.10.4
 - Fix setTimeout error
 
