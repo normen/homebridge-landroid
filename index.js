@@ -54,7 +54,7 @@ function LandroidPlatform(log, config, api) {
     self.landroidCloud.log.isDebug = self.debug;
     self.landroidCloud.setStateAsync = async function(objectname, object) {
       if(objectname == "info.connection" && object == true){
-        //await self.landroidCloud.getDeviceList();
+        self.removeTimeout = setTimeout(self.clearOldMowers.bind(self), 60000);
       } else if(objectname.includes(".mower.")){
         let serial = objectname.substring(0, objectname.indexOf("."));
         let item = objectname.split('.').pop();
