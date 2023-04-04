@@ -1,6 +1,6 @@
 {
   "name": "homebridge-landroid",
-  "version": "0.10.10",
+  "version": "0.10.11",
   "description": "HomeBridge plugin for Worx Landroid lawnmowers",
   "main": "index.js",
   "scripts": {

@@ -65,8 +65,8 @@ function LandroidPlatform(log, config, api) {
       }
     };
     self.landroidCloud.setObjectNotExistsAsync = async function(objectname, object) {
-      if(!self.landroidCloud.states[objectname]) {
-        self.landroidCloud.states[objectname] = {};
+      if(!self.landroidCloud.objects[objectname]) {
+        self.landroidCloud.objects[objectname] = {};
       }
       if(!objectname.includes(".")){
         self.landroidFound(object.common.name, objectname);
