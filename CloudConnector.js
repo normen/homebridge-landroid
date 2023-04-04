@@ -1,7 +1,7 @@
 "use strict";
 
 /*
- * Created with @iobroker/create-adapter v2.3.0
+ * Created with @homebridge/create-adapter v2.3.0
  */
 
 const Adapter = require("./CloudAdapter");
@@ -39,7 +39,7 @@ class Worx extends Adapter {
         this.laststatus = {};
         this.lasterror = {};
         this.week = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-        this.userAgent = "ioBroker ";
+        this.userAgent = "HomeBridge ";
         this.reLoginTimeout = null;
         this.refreshActivity = null;
         this.loadActivity = {};
@@ -747,8 +747,8 @@ class Worx extends Adapter {
             }
             this.userData["mqtt_endpoint"] = mqttEndpoint;
             this.mqttC = new awsIot({
-                clientId: `${this.clouds[this.config.server].mqttPrefix}/USER/${this.userData.id}/iobroker/${uuid}`,
-                username: "iobroker",
+                clientId: `${this.clouds[this.config.server].mqttPrefix}/USER/${this.userData.id}/homebridge/${uuid}`,
+                username: "homebridge",
                 protocol: "wss-custom-auth",
                 host: mqttEndpoint,
                 region: region,
@@ -992,7 +992,7 @@ class Worx extends Adapter {
                 data_json[ids][send] = Date.now();
                 data_json[ids]["response"] = 0;
                 data_json[ids]["action"] = command;
-                data_json[ids]["user"] = "iobroker";
+                data_json[ids]["user"] = "homebridge";
                 new_merge.push(data_json[ids]);
             } else {
                 const merge = new_merge.findIndex((request) => request.id === ids);
@@ -1097,7 +1097,7 @@ class Worx extends Adapter {
     /**
      * Is called if a subscribed state changes
      * @param {string} id
-     * @param {ioBroker.State | null | undefined} state
+     * @param {HomeBridge.State | null | undefined} state
      */
     async onStateChange(id, state) {
         if (state && !state.ack && state.val !== null) {
