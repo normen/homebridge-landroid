@@ -53,6 +53,7 @@ function LandroidPlatform(log, config, api) {
     self.landroidCloud.log = new LandroidLogger(log);
     self.landroidCloud.log.isDebug = self.debug;
     self.landroidCloud.setStateAsync = async function(objectname, object) {
+      self.landroidCloud.states[objectname] = object;
       if(objectname == "info.connection" && object == true){
         self.removeTimeout = setTimeout(self.clearOldMowers.bind(self), 60000);
       } else if(objectname.includes(".mower.")){
@@ -64,6 +65,9 @@ function LandroidPlatform(log, config, api) {
       }
     };
     self.landroidCloud.setObjectNotExistsAsync = async function(objectname, object) {
+      if(!self.landroidCloud.states[objectname]) {
+        self.landroidCloud.states[objectname] = {};
+      }
       if(!objectname.includes(".")){
         self.landroidFound(object.common.name, objectname);
       } else if(objectname.includes(".mower.")){

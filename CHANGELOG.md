@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
+## 0.10.9
+- Better compatibility to connector code (store cloud data)
+
 ## 0.10.8
 - Change client id / username from iobroker to homebridge
 
