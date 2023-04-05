@@ -6,7 +6,9 @@
  * https://github.com/iobroker-community-adapters/ioBroker.worx
  *
  */
-var Accessory, Service, Characteristic, UUIDGen;
+const fs = require("fs");
+const path_ad = require("path");
+var Accessory, Service, Characteristic, UUIDGen, STORAGE_PATH;
 var CloudConnector = require('./CloudConnector');
 var LandroidDataset = require('./LandroidDataset');
 
@@ -42,6 +44,7 @@ function LandroidPlatform(log, config, api) {
       self.accessories = [];
     }
     self.landroidCloud = CloudConnector();
+    self.landroidCloud.instanceFile = path_ad.join(STORAGE_PATH, "session.json");
     self.accessories.forEach(accessory=>{
       accessory.landroidCloud = self.landroidCloud;
     });
@@ -413,10 +416,19 @@ function LandroidLogger(log){
   this.fatal = this.logMsg;
 }
 
+function updateStorage(newPath){
+  var confPath = newPath + "/plugin-persist/homebridge-landroid";
+  if(!fs.existsSync(confPath)){
+    fs.mkdirSync(confPath, {recursive: true});
+  }
+  return confPath;
+}
+
 module.exports = function(homebridge) {
   Accessory = homebridge.platformAccessory;
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
   UUIDGen = homebridge.hap.uuid;
+  STORAGE_PATH = updateStorage(homebridge.user.storagePath());
   homebridge.registerPlatform("homebridge-landroid", "Landroid", LandroidPlatform, true);
 }

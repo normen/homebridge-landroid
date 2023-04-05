@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
+## 0.11.o
+- Save session data
+
 ## 0.10.12
 - Fix in value setting (upstream)
 
