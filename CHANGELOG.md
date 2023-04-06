@@ -3,7 +3,10 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
-## 0.11.o
+## 0.11.1
+- Persist cloud data
+
+## 0.11.0
 - Save session data
 
 ## 0.10.12
