@@ -243,9 +243,9 @@ LandroidAccessory.prototype.landroidUpdate = function(serial, item, data, mowdat
     //  this.log("Landroid " + this.name + " battery level changed to " + this.dataset.batteryState);
       this.accessory.getService(Service.BatteryService).getCharacteristic(Characteristic.BatteryLevel).updateValue(this.dataset.batteryState);
     }
-    if(this.dataset.partyMode != oldDataset.partyMode){
+    if(this.dataset.partyModus != oldDataset.partyModus){
       if(this.accessory.getService("PartySwitch")){
-       this.accessory.getService("PartySwitch").getCharacteristic(Characteristic.On).updateValue(this.dataset.partyMode);
+       this.accessory.getService("PartySwitch").getCharacteristic(Characteristic.On).updateValue(this.dataset.partyModus);
       }
     }
     if(this.dataset.batteryCharging != oldDataset.batteryCharging){
@@ -338,7 +338,7 @@ LandroidAccessory.prototype.setOn = function(state, callback) {
 }
 
 LandroidAccessory.prototype.getPartyMode = function(callback) {
-  if(this.dataset.partyMode) {
+  if(this.dataset.partyModus) {
     callback(null, true);
   }else{
     callback(null, false);

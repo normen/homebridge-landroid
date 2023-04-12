@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
+## 0.11.2
+- Fix party mode status
+
 ## 0.11.1
 - Persist cloud data
 
