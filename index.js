@@ -44,7 +44,11 @@ function LandroidPlatform(log, config, api) {
       self.accessories = [];
     }
     self.landroidCloud = CloudConnector();
-    self.landroidCloud.loadLandroidObjectData(STORAGE_PATH);
+    let persisted_states = self.landroidCloud.loadLandroidObjectData(STORAGE_PATH);
+    for(var myname in persisted_states) {
+      self.createUpdate(myname, persisted_states[myname]);
+    }
+
     self.accessories.forEach(accessory=>{
       accessory.landroidCloud = self.landroidCloud;
     });
@@ -133,6 +137,16 @@ LandroidPlatform.prototype.landroidFound = function(name, serial) {
   this.log("Adding Landroid " + name + " to HomeKit");
   this.api.registerPlatformAccessories('homebridge-landroid', 'Landroid', [newMower.accessory]);
   //this.landroidUpdate(mower,data);
+}
+
+LandroidPlatform.prototype.createUpdate = function(objectname, object) {
+  if(objectname.includes(".mower.")){
+    let serial = objectname.substring(0, objectname.indexOf("."));
+    let item = objectname.split('.').pop();
+    if(object && object.val){
+      this.landroidUpdate(serial, item, object.val);
+    }
+  }
 }
 
 LandroidPlatform.prototype.landroidUpdate = function(serial, item, data) {

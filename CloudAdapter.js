@@ -21,6 +21,7 @@ Adapter.prototype.loadLandroidObjectData = function(path) {
   if (fs.existsSync(this.foreign_file)) {
     this.foreigns = JSON.parse(fs.readFileSync(this.foreign_file, "utf8"));
   }
+  return this.states;
 }
 
 Adapter.prototype.saveLandroidObjectData = function() {
