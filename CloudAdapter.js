@@ -49,7 +49,9 @@ Adapter.prototype.delForeignObject = function(o) { delete this.foreigns[o]; }
 Adapter.prototype.setForeignObjectAsync = async function(o,v) { this.setForeignObject(o,v); }
 Adapter.prototype.delForeignObjectAsync = async function(o) { this.delForeignObject(o); }
 Adapter.prototype.subscribeStates = function(o) { }
-Adapter.prototype.setInterval = function(funct,delay){ setInterval(funct.bind(this), delay); }
-Adapter.prototype.setTimeout = function(funct,delay){ setTimeout(funct.bind(this), delay); }
+Adapter.prototype.setInterval = function(funct,delay){ return setInterval(funct.bind(this), delay); }
+Adapter.prototype.setTimeout = function(funct,delay){ return setTimeout(funct.bind(this), delay); }
+Adapter.prototype.clearInterval = function(obj){ clearInterval(obj); }
+Adapter.prototype.clearTimeout = function(obj){ clearTimeout(obj); }
 
 module.exports = Adapter;
