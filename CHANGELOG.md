@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
+## 0.11.5
+- Better handle multiple mowers (upstream)
+
 ## 0.11.4
 - Improve adapter to avoid unexpected timer issues
 

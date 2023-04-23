@@ -19,7 +19,6 @@ const not_allowed = 60000 * 10;
 const mqtt_poll_max = 60000;
 const poll_check = 1000; //1 sec.
 const ping_interval = 1000 * 60 * 10; //10 Minutes
-const pingMqtt = false;
 const max_request = 20;
 
 class Worx extends Adapter {
@@ -491,7 +490,6 @@ class Worx extends Adapter {
                 desc: "All raw data of the mower",
             },
         ];
-        let count_array = 0;
         for (let device of this.deviceArray) {
             for (const element of statusArray) {
                 const url = element.url.replace("$id", device.serial_number);
@@ -511,10 +509,7 @@ class Worx extends Adapter {
                         if (!res.data) {
                             return;
                         }
-                        if (element.path === "rawMqtt") {
-                            this.deviceArray[count_array] = res.data;
-                            ++count_array;
-                        }
+                        device = res.data;
                         const data = res.data;
                         const forceIndex = true;
                         const preferedArrayName = null;
@@ -786,13 +781,17 @@ class Worx extends Adapter {
                 this.mqtt_blocking = 0;
                 this.mqtt_restart && this.clearTimeout(this.mqtt_restart);
                 for (const mower of this.deviceArray) {
+                    if (!mower.mqtt_topics) {
+                        this.log.warn("No mqtt topics found for mower " + mower.serial_number);
+                        continue;
+                    }
                     this.log.debug("Worxcloud MQTT subscribe to " + mower.mqtt_topics.command_out);
                     this.mqttC.subscribe(mower.mqtt_topics.command_out, { qos: 1 });
                     if (this.initConnection) {
                         this.requestCounter++;
                         this.mqttC.publish(mower.mqtt_topics.command_in, "{}", { qos: 1 });
                     }
-                    if (pingMqtt) {
+                    if (this.config.pingMqtt) {
                         this.pingToMqtt(mower);
                     }
                 }
@@ -811,15 +810,8 @@ class Worx extends Adapter {
                     this.log.info(`Request counter since adapter start: ${this.requestCounter}`);
                     this.log.info(`Reconnects since adapter start: ${this.reconnectCounter}`);
                     this.log.info(`Adapter start date: ${new Date(this.requestCounterStart).toLocaleString()}`);
-                    if (this.deviceArray.length > 1) {
-                        this.log.info(`More than one mower found.`);
-                        for (const mower of this.deviceArray) {
-                            this.log.info(
-                                `Mower Endpoint : ${mower.mqtt_endpoint}  mqtt registered ${mower.mqtt_registered} iot_registered ${mower.iot_registered} online ${mower.online} `,
-                            );
-                        }
-                    }
-                    this.mqttC.end();
+
+                    this.mqttC && this.mqttC.end();
 
                     this.mqtt_restart && this.clearTimeout(this.mqtt_restart);
                     this.mqtt_restart = this.setTimeout(async () => {
@@ -830,7 +822,13 @@ class Worx extends Adapter {
             });
 
             this.mqttC.on("message", async (topic, message) => {
-                const data = JSON.parse(message);
+                let data;
+                try {
+                    data = JSON.parse(message);
+                } catch (error) {
+                    this.log.warn(`Cannot parse mqtt message ${message} for topic ${topic}`);
+                    return;
+                }
                 this.mqtt_blocking = 0;
                 const mower = this.deviceArray.find((mower) => mower.mqtt_topics.command_out === topic);
                 const merge = this.deviceArray.findIndex((merge) => merge.mqtt_topics.command_out === topic);
@@ -874,7 +872,7 @@ class Worx extends Adapter {
                     } catch (error) {
                         this.log.info("Mqtt Delete last_status: " + error);
                     }
-                    if (pingMqtt) {
+                    if (this.config.pingMqtt) {
                         this.pingToMqtt(mower);
                     }
                     await this.setStates(mower);
@@ -884,7 +882,8 @@ class Worx extends Adapter {
                         preferedArrayName: null,
                     });
                 } else {
-                    this.log.debug("Worxcloud MQTT could not find mower topic in mowers");
+                    this.log.info(`Worxcloud MQTT could not find mower topic - ${topic} in mowers`);
+                    this.log.info(`Mower List : ${JSON.stringify(this.deviceArray)}`);
                 }
             });
 
@@ -910,7 +909,7 @@ class Worx extends Adapter {
      */
     pingToMqtt(mower) {
         const mowerSN = mower.serial_number ? mower.serial_number : "";
-        this.pingInterval[mowerSN] && this.clearTimeout(this.pingInterval[mowerSN]);
+        this.pingInterval[mowerSN] && this.clearInterval(this.pingInterval[mowerSN]);
         this.log.debug("Reset ping");
         this.pingInterval[mowerSN] = this.setInterval(() => {
             this.sendPing(mower);
@@ -1115,7 +1114,7 @@ class Worx extends Adapter {
             this.sleepTimer && this.clearTimeout(this.sleepTimer);
             this.updateFW && this.clearInterval(this.updateFW);
             for (const mower of this.deviceArray) {
-                this.pingInterval[mower.serial_number] && this.clearTimeout(this.pingInterval[mower.serial_number]);
+                this.pingInterval[mower.serial_number] && this.clearInterval(this.pingInterval[mower.serial_number]);
             }
             this.refreshTokenInterval && this.clearInterval(this.refreshTokenInterval);
             callback();
@@ -1260,7 +1259,10 @@ class Worx extends Adapter {
                     this.log.error(`Error in ${id} ${error}`);
                     this.log.error(error.stack);
                 }
-            } else this.log.error(`No mower found!  ${JSON.stringify(mower_id)}`);
+            } else {
+                this.log.error(`No mower found!  ${JSON.stringify(mower_id)}`);
+                this.log.info(`Mower list ${JSON.stringify(this.deviceArray)}`);
+            }
         }
     }
 
@@ -1526,6 +1528,11 @@ class Worx extends Adapter {
         const val = value;
         let sval, dayID;
 
+        if (!mower.last_status) {
+            // check if config exist
+            this.log.warn(`Missing last_status from mower ${mower.serial_number} cannot send command`);
+            return;
+        }
         if (!mower.last_status.payload || mower.last_status.payload.cfg == null) {
             // check if config exist
             this.log.warn(
