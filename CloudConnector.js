@@ -56,6 +56,7 @@ class Worx extends Adapter {
         this.createDevices = helper.createDevices;
         this.setStates = helper.setStates;
         this.cleanupRaw = helper.cleanupRaw;
+        this.createDataPoint = helper.createDataPoint;
         this.json2iob = new Json2iob(this);
         this.cookieJar = new tough.CookieJar();
         this.requestClient = axios.create({
@@ -135,6 +136,9 @@ class Worx extends Adapter {
                 await this.updateDevices();
             }, 10 * 60 * 1000); // 10 minutes
 
+            if (!this.session.expires_in || this.session.expires_in < 200) {
+                this.session.expires_in = 3600;
+            }
             this.refreshTokenInterval = this.setInterval(() => {
                 this.refreshToken();
             }, (this.session.expires_in - 200) * 1000);
@@ -290,10 +294,11 @@ class Worx extends Adapter {
                     this.log.info(`Found device ${name} with id ${id}`);
 
                     await this.cleanOldVersion(id);
-                    this.deviceArray.push(device);
                     await this.createDevices(device);
                     const fw_id = await this.apiRequest(`product-items/${id}/firmwares`, false);
+                    this.log.debug("fw_id: " + JSON.stringify(fw_id));
                     await this.createAdditionalDeviceStates(device, fw_id);
+                    this.deviceArray.push(device);
                     if (
                         device &&
                         device.last_status &&
@@ -490,7 +495,7 @@ class Worx extends Adapter {
                 desc: "All raw data of the mower",
             },
         ];
-        for (let device of this.deviceArray) {
+        for (const device of this.deviceArray) {
             for (const element of statusArray) {
                 const url = element.url.replace("$id", device.serial_number);
                 await this.requestClient({
@@ -509,12 +514,16 @@ class Worx extends Adapter {
                         if (!res.data) {
                             return;
                         }
-                        device = res.data;
                         const data = res.data;
                         const forceIndex = true;
                         const preferedArrayName = null;
-                        device = data;
                         await this.setStates(data);
+                        const index = this.deviceArray.findIndex((index) => index.serial_number === data.serial_number);
+                        this.log.debug(`Index Update: ${index}`);
+                        if (index != null && this.deviceArray[index] != null) {
+                            this.log.debug(`Update this.deviceArray: ${index}`);
+                            this.deviceArray[index] = data;
+                        }
                         try {
                             if (!data || !data.last_status || !data.last_status.payload) {
                                 this.log.debug("No last_status found");
@@ -607,18 +616,33 @@ class Worx extends Adapter {
         }
         const status = mower.last_status.payload;
         if (status && status.cfg && status.cfg.sc && status.cfg.sc.dd) {
-            this.log.info("found DoubleShedule, create states...");
+            this.log.info("DoubleShedule found, create states...");
 
             // create States
             for (const day of this.week) {
+                await this.setObjectNotExistsAsync(`${mower.serial_number}.calendar.${day}2`, {
+                    type: "channel",
+                    common: {
+                        name: `${day} 2`,
+                    },
+                    native: {},
+                });
                 for (const o of objects.calendar) {
                     // @ts-ignore
                     await this.setObjectNotExistsAsync(`${mower.serial_number}.calendar.${day}2.${o._id}`, o);
                 }
             }
         }
-        if (status && status.cfg && status.cfg.sc != null && status.cfg.sc.ots != null) {
-            this.log.info("found OneTimeShedule, create states...");
+
+        if (
+            (status && status.cfg && status.cfg.sc != null && status.cfg.sc.ots != null) ||
+            (status &&
+                status.cfg &&
+                status.cfg.sc != null &&
+                status.cfg.sc.once != null &&
+                status.cfg.sc.once.time != null)
+        ) {
+            this.log.info("OneTimeShedule found, create states...");
 
             // create States
             for (const o of objects.oneTimeShedule) {
@@ -629,7 +653,7 @@ class Worx extends Adapter {
 
         if (fw_json && Object.keys(fw_json).length > 0 && fw_json[0] && fw_json[0].version && fw_json[0].updated_at) {
             this.fw_available[mower.serial_number] = true;
-            this.log.info("found available firmware, create states...");
+            this.log.info("Firmware found, create states...");
             for (const o of objects.firmware_available) {
                 // @ts-ignore
                 await this.setObjectNotExistsAsync(`${mower.serial_number}.mower.${o._id}`, o);
@@ -649,17 +673,39 @@ class Worx extends Adapter {
         }
 
         if (status && status.cfg && status.cfg.sc && status.cfg.sc.distm != null && status.cfg.sc.m != null) {
-            this.log.info("found PartyModus, create states...");
-
+            this.log.info("PartyModus found, create states...");
             // create States
             for (const o of objects.partyModus) {
                 // @ts-ignore
                 this.setObjectNotExistsAsync(`${mower.serial_number}.mower.${o._id}`, o);
             }
         }
+        // Vision PartyMode
+        if (status && status.cfg && status.cfg.sc && status.cfg.sc.enabled != null) {
+            this.log.info("PartyModus found, create states...");
+            // create States
+            for (const o of objects.partyModus) {
+                // @ts-ignore
+                this.setObjectNotExistsAsync(`${mower.serial_number}.mower.${o._id}`, o);
+            }
+        }
+        // Vision Paused
+        if (status && status.cfg && status.cfg.sc && status.cfg.sc.paused != null) {
+            this.log.info("Paused found, create states...");
+            // create States
+            for (const o of objects.paused) {
+                // @ts-ignore
+                this.setObjectNotExistsAsync(`${mower.serial_number}.mower.${o._id}`, o);
+            }
+        }
+        if (mower.capabilities != null && !mower.capabilities.includes("vision")) {
+            this.setObjectNotExistsAsync(
+                `${mower.serial_number}.calendar.${objects.calJson[0]._id}`,
+                // @ts-ignore
+                objects.calJson[0],
+            );
+        }
 
-        // @ts-ignore
-        this.setObjectNotExistsAsync(`${mower.serial_number}.calendar.${objects.calJson[0]._id}`, objects.calJson[0]);
         // @ts-ignore
         this.setObjectNotExistsAsync(`${mower.serial_number}.calendar.${objects.calJson[1]._id}`, objects.calJson[1]);
         // @ts-ignore
@@ -799,8 +845,8 @@ class Worx extends Adapter {
             });
 
             this.mqttC.on("reconnect", () => {
-                this.log.debug("MQTT reconnect: " + this.mqtt_blocking);
-                this.log.debug(`Reconnect since adapter start: ${this.reconnectCounter}`);
+                this.log.info("MQTT reconnect: " + this.mqtt_blocking);
+                this.log.info(`Reconnect since adapter start: ${this.reconnectCounter}`);
                 ++this.reconnectCounter;
                 ++this.mqtt_blocking;
                 if (this.mqtt_blocking > 15) {
@@ -829,6 +875,8 @@ class Worx extends Adapter {
                     this.log.warn(`Cannot parse mqtt message ${message} for topic ${topic}`);
                     return;
                 }
+                //For testing
+                //this.log.info(`Mower message: ${JSON.stringify(data)}`);
                 this.mqtt_blocking = 0;
                 const mower = this.deviceArray.find((mower) => mower.mqtt_topics.command_out === topic);
                 const merge = this.deviceArray.findIndex((merge) => merge.mqtt_topics.command_out === topic);
@@ -838,6 +886,9 @@ class Worx extends Adapter {
                         "Worxcloud MQTT get Message for mower " + mower.name + " (" + mower.serial_number + ")",
                     );
                     try {
+                        if (!data.cfg.sn) {
+                            data.cfg.sn = mower.serial_number;
+                        }
                         if (this.mqtt_response_check[data.cfg.id]) {
                             this.log.debug(`Request ID ${data.cfg.id} has been passed to the mower`);
                             this.lastCommand(this.mqtt_response_check, "response", data.cfg.id);
@@ -857,7 +908,7 @@ class Worx extends Adapter {
                         } else {
                             this.log.debug("Set new timestamp");
                             try {
-                                if (merge) {
+                                if (merge != null) {
                                     this.deviceArray[merge].last_status.payload = data;
                                 }
                             } catch (error) {
@@ -876,6 +927,9 @@ class Worx extends Adapter {
                         this.pingToMqtt(mower);
                     }
                     await this.setStates(mower);
+                    if (merge != null) {
+                        this.deviceArray[merge] = mower;
+                    }
                     const new_mower = await this.cleanupRaw(mower);
                     this.json2iob.parse(`${mower.serial_number}.rawMqtt`, new_mower, {
                         forceIndex: true,
@@ -896,10 +950,10 @@ class Worx extends Adapter {
             // });
 
             this.mqttC.on("error", (error) => {
-                this.log.error("MQTT ERROR: " + error);
+                this.log.info("MQTT ERROR: " + error);
             });
         } catch (error) {
-            this.log.error("MQTT ERROR: " + error);
+            this.log.info("MQTT ERROR: " + error);
             this.mqttC = null;
         }
     }
@@ -948,10 +1002,12 @@ class Worx extends Adapter {
                         this.cleanup_json();
                     }
                     const data = await this.sendPing(mower, true, JSON.parse(message));
+                    message = JSON.stringify(data);
                     this.mqtt_response_check[data.id] = data;
                     await this.lastCommand(this.mqtt_response_check, "request", data.id, command);
                     this.log.debug(`this.mqtt_response_check:  ${JSON.stringify(this.mqtt_response_check)}`);
-                    this.mqttC.publish(mower.mqtt_topics.command_in, JSON.stringify(data), { qos: 1 });
+                    this.log.debug(`sendData:  ${message}`);
+                    this.mqttC.publish(mower.mqtt_topics.command_in, message, { qos: 1 });
                 } catch (error) {
                     this.log.info(`sendMessage normal:  ${error}`);
                     this.mqttC.publish(mower.mqtt_topics.command_in, message, { qos: 1 });
@@ -1066,6 +1122,83 @@ class Worx extends Adapter {
             }
         }
     }
+    async evaluateVisionCalendar(mower, arr) {
+        if (arr) {
+            this.log.debug("COUNTER: " + arr.length);
+            let x = 0;
+            let y = 1;
+            const new_schedule = [];
+            for (let i = 0; i < this.week.length; i++) {
+                const empty_schedule = {
+                    e: 0,
+                    d: 0,
+                    s: 0,
+                    t: 0,
+                    cfg: {
+                        cut: {
+                            b: 0,
+                            z: [],
+                        },
+                    },
+                };
+                let t = "00:00";
+                let wt = 0;
+                let cut = false;
+                y = x + 1;
+                if (arr[x] && parseFloat(arr[x].d) === i) {
+                    t = this.formatDate(parseFloat(arr[x].s) * 60000, "hh:mm");
+                    wt = arr[x].t;
+                    cut = arr[x].cfg && arr[x].cfg.cut && arr[x].cfg.cut.b && arr[x].cfg.cut.b === 1 ? true : false;
+                    this.log.debug(JSON.stringify(arr[x]));
+                    new_schedule.push(arr[x]);
+                    x++;
+                } else {
+                    empty_schedule.d = i;
+                    new_schedule.push(empty_schedule);
+                }
+                await this.setStateAsync(`${mower.serial_number}.calendar.${this.week[i]}.startTime`, {
+                    val: t,
+                    ack: true,
+                });
+                await this.setStateAsync(`${mower.serial_number}.calendar.${this.week[i]}.workTime`, {
+                    val: wt,
+                    ack: true,
+                });
+                await this.setStateAsync(`${mower.serial_number}.calendar.${this.week[i]}.borderCut`, {
+                    val: cut,
+                    ack: true,
+                });
+                t = "00:00";
+                wt = 0;
+                cut = false;
+                if (arr[y] && parseFloat(arr[y].d) === i) {
+                    t = this.formatDate(parseFloat(arr[y].s) * 60000, "hh:mm");
+                    wt = arr[y].t;
+                    cut = arr[y].cfg && arr[y].cfg.cut && arr[y].cfg.cut.b && arr[y].cfg.cut.b === 1 ? true : false;
+                    this.log.debug(JSON.stringify(arr[y]));
+                    new_schedule.push(arr[y]);
+                    x++;
+                } else {
+                    empty_schedule.d = i;
+                    new_schedule.push(empty_schedule);
+                }
+                await this.setStateAsync(`${mower.serial_number}.calendar.${this.week[i]}2.startTime`, {
+                    val: t,
+                    ack: true,
+                });
+                await this.setStateAsync(`${mower.serial_number}.calendar.${this.week[i]}2.workTime`, {
+                    val: wt,
+                    ack: true,
+                });
+                await this.setStateAsync(`${mower.serial_number}.calendar.${this.week[i]}2.borderCut`, {
+                    val: cut,
+                    ack: true,
+                });
+            }
+            arr = new_schedule;
+            return arr;
+        }
+    }
     extractHidden(body) {
         const returnObject = {};
         if (body) {
@@ -1155,15 +1288,28 @@ class Worx extends Adapter {
                         } else {
                             this.stopMower(mower, id);
                         }
+                    } else if (command == "paused") {
+                        const pause = typeof state.val === "number" ? state.val : parseInt(state.val.toString());
+                        if (pause > 0) {
+                            this.sendMessage(`{"sc":{ "paused":${pause}}}`, mower.serial_number, id);
+                        }
                     } else if (command == "waitRain") {
                         const rain = typeof state.val === "number" ? state.val : parseInt(state.val.toString());
                         const val = rain < 0 ? 100 : rain;
                         this.sendMessage(`{"rd":${val}}`, mower.serial_number, id);
                         this.log.debug(`Changed time wait after rain to:${val}`);
                     } else if (command === "borderCut" || command === "startTime" || command === "workTime") {
-                        this.changeMowerCfg(id, state.val, mower, false);
+                        if (mower.capabilities != null && mower.capabilities.includes("vision")) {
+                            this.changeVisionCfg(id, state.val, mower, false);
+                        } else {
+                            this.changeMowerCfg(id, state.val, mower, false);
+                        }
                     } else if (command === "calJson_sendto" && state.val) {
-                        this.changeMowerCfg(id, state.val, mower, true);
+                        if (mower.capabilities != null && mower.capabilities.includes("vision")) {
+                            this.changeVisionCfg(id, state.val, mower, true);
+                        } else {
+                            this.changeMowerCfg(id, state.val, mower, true);
+                        }
                     } else if (
                         command === "area_0" ||
                         command === "area_1" ||
@@ -1202,10 +1348,9 @@ class Worx extends Adapter {
                         //hotfix 030620
                         delete message.ots;
                         delete message.distm;
-
                         message.m = val;
-                        this.sendMessage(`{"sc":${JSON.stringify(message)}}`, mower.serial_number, id);
                         this.log.debug(`Mow times disabled: ${message.m}`);
+                        this.sendMessage(`{"sc":${JSON.stringify(message)}}`, mower.serial_number, id);
                     } else if (command === "edgecut") {
                         this.edgeCutting(id, state.val, mower);
                     } else if (command === "sendCommand") {
@@ -1225,6 +1370,26 @@ class Worx extends Adapter {
                             msg.t = 0;
                         }
                         this.sendMessage(`{"al":${JSON.stringify(msg)}}`, mower.serial_number, id);
+                    } else if (
+                        command === "log_improvement" &&
+                        mower.last_status.payload &&
+                        mower.last_status.payload.cfg &&
+                        mower.last_status.payload.cfg.log &&
+                        mower.last_status.payload.cfg.log.imp != null
+                    ) {
+                        const msg = mower.last_status.payload.cfg.log;
+                        msg.imp = state.val ? 1 : 0;
+                        this.sendMessage(`{"log":${JSON.stringify(msg)}}`, mower.serial_number, id);
+                    } else if (
+                        command === "log_troubleshooting" &&
+                        mower.last_status.payload &&
+                        mower.last_status.payload.cfg &&
+                        mower.last_status.payload.cfg.log &&
+                        mower.last_status.payload.cfg.log.diag != null
+                    ) {
+                        const msg = mower.last_status.payload.cfg.log;
+                        msg.diag = state.val ? 1 : 0;
+                        this.sendMessage(`{"log":${JSON.stringify(msg)}}`, mower.serial_number, id);
                     } else if (command === "AutoLockTimer") {
                         const lock = typeof state.val === "number" ? state.val : parseInt(state.val.toString());
                         if (lock < 0 || lock > 600) {
@@ -1235,6 +1400,14 @@ class Worx extends Adapter {
                         msg.t = typeof state.val === "number" ? state.val : parseInt(state.val.toString());
                         if (msg.lvl === 0) msg.lvl = 1;
                         this.sendMessage(`{"al":${JSON.stringify(msg)}}`, mower.serial_number, id);
+                    } else if (command === "HL") {
+                        const msg = {};
+                        msg.enabled = state.val;
+                        this.sendMessage(`{"modules":{"HL":${JSON.stringify(msg)}}}`, mower.serial_number, id);
+                    } else if (command === "slab") {
+                        const msg = {};
+                        msg.slab = state.val;
+                        this.sendMessage(`{"vis":${msg}}`, mower.serial_number, id);
                     } else if (command === "OLMSwitch_Cutting" && this.modules[mower.serial_number].DF) {
                         const msg = this.modules[mower.serial_number].DF;
                         msg.cut = state.val ? 1 : 0;
@@ -1254,6 +1427,26 @@ class Worx extends Adapter {
                         if (torque < -50 || torque > 50) return;
                         const tqval = typeof state.val === "number" ? state.val : parseInt(state.val.toString());
                         this.sendMessage(`{"tq":${tqval}}`, mower.serial_number, id);
+                    } else if (command === "zoneKeeper") {
+                        const keeper = state.val ? 1 : 0;
+                        if (
+                            mower.last_status != null &&
+                            mower.last_status.payload != null &&
+                            mower.last_status.payload.cfg != null &&
+                            mower.last_status.payload.cfg.mz != null
+                        ) {
+                            const area = mower.last_status.payload.cfg.mz;
+                            const sum = area.reduce((pv, cv) => {
+                                return Number(pv) + Number(cv);
+                            }, 0);
+                            if (keeper && sum === 0) {
+                                this.log.info("Areas are disable! At least one area must be activated!");
+                                return;
+                            }
+                            this.sendMessage(`{"mzk":${keeper}}`, mower.serial_number, id);
+                        } else {
+                            this.log.debug("Area array not found!");
+                        }
                     }
                 } catch (error) {
                     this.log.error(`Error in ${id} ${error}`);
@@ -1338,16 +1531,27 @@ class Worx extends Adapter {
                 : "de";
         const mowerSN = mower.serial_number;
         const now = new Date();
+        let vision = {};
+        if (mower.capabilities != null && mower.capabilities.includes("vision")) {
+            vision = {
+                uuid: mower.uuid,
+                tm: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString(),
+            };
+        } else {
+            vision = {
+                // Important: Send the time in your local timezone, otherwise mowers clock will be wrong.
+                tm: `${("0" + now.getHours()).slice(-2)}:${("0" + now.getMinutes()).slice(-2)}:${(
+                    "0" + now.getSeconds()
+                ).slice(-2)}`,
+                dt: `${("0" + now.getDate()).slice(-2)}/${("0" + (now.getMonth() + 1)).slice(-2)}/${now.getFullYear()}`,
+            };
+        }
         const message = {
             id: 1024 + Math.floor(Math.random() * (65535 - 1025)),
             cmd: 0,
             lg: language,
             sn: mowerSN,
-            // Important: Send the time in your local timezone, otherwise mowers clock will be wrong.
-            tm: `${("0" + now.getHours()).slice(-2)}:${("0" + now.getMinutes()).slice(-2)}:${(
-                "0" + now.getSeconds()
-            ).slice(-2)}`,
-            dt: `${("0" + now.getDate()).slice(-2)}/${("0" + (now.getMonth() + 1)).slice(-2)}/${now.getFullYear()}`,
+            ...vision,
             ...merge_message,
         };
         this.log.debug("Start MQTT ping: " + JSON.stringify(message));
@@ -1419,27 +1623,62 @@ class Worx extends Adapter {
             const bc = await this.getStateAsync(`${mower.serial_number}.mower.oneTimeWithBorder`);
             const wtm = await this.getStateAsync(`${mower.serial_number}.mower.oneTimeWorkTime`);
             if (bc && wtm) {
-                msgJson = {
-                    bc: bc.val ? 1 : 0,
-                    wtm: wtm.val,
-                };
+                if (wtm.val === 0) {
+                    this.log.info("Datapoint oneTimeWorkTime with value 0 is not allowed!");
+                    return;
+                }
+                if (mower.capabilities != null && mower.capabilities.includes("vision")) {
+                    msgJson = {
+                        once: {
+                            time: wtm.val,
+                            cfg: {
+                                cut: {
+                                    b: bc.val ? 1 : 0,
+                                    z: [],
+                                },
+                            },
+                        },
+                    };
+                } else {
+                    msgJson = {
+                        ots: {
+                            bc: bc.val ? 1 : 0,
+                            wtm: wtm.val,
+                        },
+                    };
+                }
             }
         } else if (idType === "oneTimeJson") {
             try {
-                msgJson = JSON.parse(value);
-
-                if (msgJson.bc == null || msgJson.wtm == null) {
-                    this.log.error('ONETIMESHEDULE: NO vailed format. must contain "bc" and "wtm"');
+                let time_check = null;
+                let border_check = null;
+                if (mower.capabilities != null && mower.capabilities.includes("vision")) {
+                    msgJson = JSON.parse(value);
+                    msgJson = { once: { ...msgJson } };
+                    time_check = msgJson.once.time;
+                    border_check = msgJson.once.cfg.cut.b;
+                } else {
+                    msgJson = JSON.parse(value);
+                    msgJson = { ots: { ...msgJson } };
+                    time_check = msgJson.ots.wtm;
+                    border_check = msgJson.ots.bc;
+                }
+                if (time_check == null || border_check == null) {
+                    this.log.error('ONETIMESHEDULE: NO vailed format. Must contain "bc" and "wtm" or "time" and "b"');
+                    return;
+                }
+                if (time_check === 0) {
+                    this.log.info("Datapoint oneTimeJson (wtm or time) with value 0 is not allowed!");
                     return;
                 }
             } catch (error) {
-                this.log.error("ONETIMESHEDULE: NO vailed JSON format");
+                this.log.error("ONETIMESCHEDULE: NO vailed JSON format");
                 return;
             }
         }
 
-        this.log.debug(`ONETIMESHEDULE: ${JSON.stringify(msgJson)}`);
-        this.sendMessage(`{"sc":{"ots":${JSON.stringify(msgJson)}}}`, mower.serial_number, id);
+        this.log.debug(`ONETIMESCHEDULE: ${JSON.stringify(msgJson)}`);
+        this.sendMessage(`{"sc":${JSON.stringify(msgJson)}}`, mower.serial_number, id);
     }
 
     /**
@@ -1524,9 +1763,113 @@ class Worx extends Adapter {
      * @param {object} mower object of mower that changed
      * @param {boolean} send
      */
+    async changeVisionCfg(id, value, mower, send) {
+        if (!mower.last_status) {
+            // check if config exist
+            this.log.warn(`Missing last_status from mower ${mower.serial_number} cannot send command`);
+            return;
+        }
+        if (
+            !mower.last_status.payload ||
+            mower.last_status.payload.cfg == null ||
+            mower.last_status.payload.cfg.sc == null ||
+            mower.last_status.payload.cfg.sc.slots == null
+        ) {
+            // check if config exist
+            this.log.warn(
+                `Cant send command because no Configdata from cloud exist please try again later. last message: ${JSON.stringify(
+                    mower.last_status.payload,
+                )}`,
+            );
+            return;
+        }
+        if (mower && mower.auto_schedule && send) {
+            this.log.info(`Automatic mowing plan active! Times cannot be changed.`);
+            return;
+        }
+        if (send) {
+            const message = await this.getStateAsync(`${mower.serial_number}.calendar.calJson_tosend`);
+            const schedule_new = [];
+            if (message != null && message.val != null && message.val != "") {
+                try {
+                    let message_dp;
+                    if (typeof message.val === "object") {
+                        message_dp = JSON.parse(JSON.stringify(message.val));
+                    } else if (typeof message.val === "string") {
+                        message_dp = JSON.parse(message.val);
+                    }
+                    for (const slot of message_dp) {
+                        if (slot.s !== 0 && slot.t !== 0) {
+                            slot.e = 1;
+                            this.log.debug(JSON.stringify(slot));
+                            schedule_new.push(slot);
+                        }
+                    }
+                    this.log.debug(`Send Schedule: ${JSON.stringify(schedule_new)}`);
+                    this.sendMessage(`{"sc":{"slots":${JSON.stringify(schedule_new)}}}`, mower.serial_number, id);
+                    this.setStateAsync(`${mower.serial_number}.calendar.calJson_sendto`, {
+                        val: false,
+                        ack: true,
+                    });
+                } catch (e) {
+                    this.log.info(`Send new schedule is not possible!`);
+                }
+            }
+            return;
+        }
+        const arr = id.split(".");
+        const scheduleSelect = arr[4].search("2") === -1 ? 0 : 1;
+        const message = mower.last_status.payload.cfg.sc.slots;
+        let dayID = this.week.indexOf(arr[4].replace(/2/g, ""));
+        dayID = dayID + dayID + scheduleSelect;
+        this.log.debug(`day: ${arr[4].replace(/2/g, "")} scheduleSelect: ${scheduleSelect} dID: ${dayID}`);
+        try {
+            if (arr[5] === "borderCut") {
+                message[dayID].cfg.cut.b = value ? 1 : 0;
+            } else if (arr[5] === "workTime") {
+                const max = 1440 - message[dayID].s;
+                this.log.debug(`value: ${value} max: ${max} dID: ${dayID}`);
+                if (value >= 0 && value <= max) {
+                    message[dayID].t = parseInt(value);
+                } else {
+                    this.log.error("Time out of range 0 min < time < 1440 min.");
+                    return;
+                }
+            } else if (arr[5] === "startTime") {
+                const t = value.split(":");
+                const h = parseInt(t[0]);
+                const m = parseInt(t[1]);
+                this.log.debug(`h: ${h} m: ${m} dID: ${dayID}`);
+                if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+                    message[dayID].s = h * 60 + m;
+                } else {
+                    this.log.error('Time out of range: e.g "10:00"');
+                    return;
+                }
+            } else {
+                this.log.error("Something went wrong while setting new mower times");
+                return;
+            }
+        } catch (e) {
+            this.log.error(`Error while setting mower time: ${e}`);
+            return;
+        }
+        this.log.debug(`Mowing time change at ${scheduleSelect} to: ${JSON.stringify(message)}`);
+        this.setStateAsync(`${mower.serial_number}.calendar.calJson_tosend`, {
+            val: JSON.stringify(message),
+            ack: true,
+        });
+    }
+    /**
+     * @param {string} id id of state
+     * @param {any} value value that changed
+     * @param {object} mower object of mower that changed
+     * @param {boolean} send
+     */
     async changeMowerCfg(id, value, mower, send) {
         const val = value;
-        let sval, dayID;
+        let sval;
+        let dayID;
 
         if (!mower.last_status) {
             // check if config exist
@@ -1670,7 +2013,10 @@ class Worx extends Adapter {
      * @param {any} mower
      */
     sendPartyModus(id, value, mower) {
-        if (value) {
+        if (mower.capabilities != null && mower.capabilities.includes("vision")) {
+            const val = value ? 1 : 0;
+            this.sendMessage(`{"sc":{ "enabled":${val}}}`, mower.serial_number, id);
+        } else if (value) {
             this.sendMessage('{"sc":{ "m":2, "distm": 0}}', mower.serial_number, id);
         } else {
             this.sendMessage('{"sc":{ "m":1, "distm": 0}}', mower.serial_number, id);
@@ -1774,7 +2120,7 @@ class Worx extends Adapter {
             !mower.last_status ||
             !mower.last_status.payload ||
             !mower.last_status.payload.cfg ||
-            !mower.last_status.payload.cfg.sc
+            (!mower.last_status.payload.cfg.sc && !mower.last_status.payload.cfg.cut)
         ) {
             // check if config exist
             this.log.warn(
@@ -1786,6 +2132,16 @@ class Worx extends Adapter {
         }
 
         if (
+            val === true &&
+            mower.last_status.payload &&
+            mower.last_status.payload.cfg &&
+            mower.last_status.payload.cfg.sc &&
+            mower.last_status.payload.cfg.cut &&
+            mower.last_status.payload.cfg.cut.b === 0
+        ) {
+            this.modules[mower.serial_number].edgeCut = true;
+            this.sendMessage('{"cut":{"b":1,"z":[]}}', mower.serial_number, id);
+        } else if (
             val === true &&
             mower.last_status.payload &&
             mower.last_status.payload.cfg &&
