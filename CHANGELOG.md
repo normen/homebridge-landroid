@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
+## 0.11.8
+- Attempt to fix party mode status
+
 ## 0.11.7
 - Another attempt at fixing error state
 

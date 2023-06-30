@@ -261,7 +261,7 @@ LandroidAccessory.prototype.landroidUpdate = function(serial, item, data, mowdat
     }
     if(this.dataset.partyModus != oldDataset.partyModus){
       if(this.accessory.getService("PartySwitch")){
-       this.accessory.getService("PartySwitch").getCharacteristic(Characteristic.On).updateValue(this.dataset.partyModus);
+       this.accessory.getService("PartySwitch").getCharacteristic(Characteristic.On).updateValue(this.dataset.partyModus == true);
       }
     }
     if(this.dataset.batteryCharging != oldDataset.batteryCharging){
