@@ -64,13 +64,14 @@ Note: If you update from Version <= 0.9.5 or enable the sensor after first setup
 You can see the battery status in the settings of either the switch or contact sensor in the Home app and you can ask Siri about the battery status of your lawn mower.
 
 ## Development
-If you want new features or improve the plugin, you're very welcome to do so. The projects `devDependencies` include homebridge and the `npm run test` command has been adapted so that you can run a test instance of homebridge during development. 
+If you want new features or improve the plugin, you're very welcome to do so. The projects `devDependencies` include homebridge and the `npm run test` command has been adapted so that you can run a test instance of homebridge during development. Alternatively you can use `npm run dev` if you have homebridge installed as a global package
 #### Setup
 - clone github repo
 - `npm install` in the project folder
 - create `.homebridge` folder in project root
 - add `config.json` with appropriate content to `.homebridge` folder
 - run `npm run test` to start the homebridge instance for testing
+- alternatively run `npm run dev` to start homebridge if its installed as a global package
 
 #### Notes
 Most of the connector code is directly copied from [iobroker.worx](https://github.com/iobroker-community-adapters/ioBroker.worx), a helper script called 'sync-code' allows updating to the latest version of that code.

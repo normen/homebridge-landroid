@@ -3,6 +3,9 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
+## 0.11.9
+- PartyMode switch now properly reflects PartyMode state
+
 ## 0.11.8
 - Attempt to fix party mode status
 
