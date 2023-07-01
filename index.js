@@ -67,7 +67,8 @@ function LandroidPlatform(log, config, api) {
       } else if(objectname.includes(".mower.")){
         let serial = objectname.substring(0, objectname.indexOf("."));
         let item = objectname.split('.').pop();
-        if(object && object.val){
+
+        if(object && (object.val !== null || object.val !== undefined)) {
           self.landroidUpdate(serial, item, object.val);
         }
       }
@@ -143,14 +144,14 @@ LandroidPlatform.prototype.createUpdate = function(objectname, object) {
   if(objectname.includes(".mower.")){
     let serial = objectname.substring(0, objectname.indexOf("."));
     let item = objectname.split('.').pop();
-    if(object && object.val){
+    if(object && (object.val !== null || object.val !== undefined)) {
       this.landroidUpdate(serial, item, object.val);
     }
   }
 }
 
 LandroidPlatform.prototype.landroidUpdate = function(serial, item, data) {
-    if(this.debug && data) {
+    if(this.debug) {
       this.log("[DEBUG] DATA: " + item + ": " + JSON.stringify(data));
     }
     this.accessories.forEach(accessory=>{
