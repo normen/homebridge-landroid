@@ -71,7 +71,7 @@ class Worx extends Adapter {
         this.clouds = {
             worx: {
                 url: "api.worxlandroid.com",
-                loginUrl: "https://id.eu.worx.com/",
+                loginUrl: "https://id.worx.com/",
                 clientId: "150da4d2-bb44-433b-9429-3773adc70a2a",
                 redirectUri: "com.worxlandroid.landroid://oauth-callback/",
                 mqttPrefix: "WX",
