@@ -3,7 +3,7 @@ This is the change log for the plugin, all relevant changes will be listed here.
 
 For documentation please see the [README](https://github.com/normen/homebridge-landroid/blob/master/README.md)
 
-## 0.12.1
+## 0.12.2
 - Update worx endpoint and upstream library
 
 ## 0.11.9
