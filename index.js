@@ -74,6 +74,7 @@ function LandroidPlatform(log, config, api) {
       }
     };
     self.landroidCloud.setObjectNotExists = async function(objectname, object) {
+      if(!objectname instanceof String) return;
       if(!self.landroidCloud.objects[objectname]) {
         self.landroidCloud.objects[objectname] = {};
       }
