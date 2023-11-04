@@ -1,6 +1,6 @@
 {
   "name": "homebridge-landroid",
-  "version": "0.12.3",
+  "version": "0.12.4",
   "description": "HomeBridge plugin for Worx Landroid lawnmowers",
   "main": "index.js",
   "scripts": {
@@ -25,7 +25,6 @@
     "aws-iot-device-sdk": "^2.2.12",
     "aws-iot-device-sdk-v2": "^1.16.2",
     "axios": "^1.4.0",
-    "crypto": "^1.0.1",
     "http-cookie-agent": "^5.0.4",
     "json2iob": "^2.4.5",
     "moment": "^2.29.1",
