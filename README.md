@@ -6,7 +6,7 @@ I moved my personal setup to [FHEM](https://github.com/fhem) which supports Worx
 
 ##### Basic rundown
 
-- Install [FHEM](https://github.com/fhem)
+- Install [FHEM](https://fhem.de/#Installation)
 - Install [Homebridge-FHEM](https://github.com/justme-1968/homebridge-fhem) plugin in Homebridge
 - Add Worx mowers to FHEM according to [this guide](https://wiki.fhem.de/wiki/Mähroboter:_Worx_Landroid,_Kress,_Landxcape)
 - Mowers will be found and added after you configured the Worx bridge as outlined above
