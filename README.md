@@ -1,3 +1,35 @@
+# DISCONTINUED
+
+** This project has been discontinued as of December 2023 **
+
+I moved my personal setup to [FHEM](https://github.com/fhem) which supports Worx mowers out of the box and can be used together with homebridge.
+
+##### Basic rundown
+
+- Install [FHEM](https://github.com/fhem)
+- Install [Homebridge-FHEM](https://github.com/justme-1968/homebridge-fhem) plugin in Homebridge
+- Add Worx mowers to FHEM according to [this guide](https://wiki.fhem.de/wiki/Mähroboter:_Worx_Landroid,_Kress,_Landxcape)
+- Mowers will be found and added after you configured the Worx bridge as outlined above
+- Apply `worx_mower` attrTemplate to newly found mowers
+- Add `siriName` attribute to mower for it to be loaded in HomeKit
+- Add `homekitMapping` attribute to mower with the content below
+- Restart homebridge
+
+##### homekitMapping
+
+This `homekitMapping` has to be added to the mower so it can be controlled properly from HomeKit:
+```
+clear
+On=mowerStatusTxt,values=Home:0;;/.*/:1,cmds=0:stopMower;;1:startMower;;false:stopMower;;true:startMower
+BatteryLevel=batteryPercent
+ChargingState=batteryCharging
+```
+
+To add other switches you can add more `On=...` lines, to add ContactSensors add a line like
+```
+ContactSensorState=mowerStatusTxt,values=closed:Home=0;open:/.*/
+```
+
 # homebridge-landroid [![NPM Version](https://img.shields.io/npm/v/homebridge-landroid.svg)](https://www.npmjs.com/package/homebridge-landroid) [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 Homebridge plugin to control Worx Landroid (as well as Kress, Ferrex and Landxcape) lawn mowers through the Cloud, should support most mowers.
 
