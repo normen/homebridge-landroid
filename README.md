@@ -10,7 +10,7 @@ I moved my personal setup to [FHEM](https://github.com/fhem) which supports Worx
 - Install [Homebridge-FHEM](https://github.com/justme-1968/homebridge-fhem) plugin in Homebridge
 - Add Worx mowers to FHEM according to [this guide](https://wiki.fhem.de/wiki/Mähroboter:_Worx_Landroid,_Kress,_Landxcape)
 - Mowers will be found and added after you configured the Worx bridge as outlined above
-- Apply `worx_mower` attrTemplate to newly found mowers
+- Apply `worx_landroid` attrTemplate to newly found mowers via web UI set command or otherwise
 - Add `siriName` attribute to mower for it to be loaded in HomeKit
 - Add `homekitMapping` attribute to mower with the content below
 - Restart homebridge
