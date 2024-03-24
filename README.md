@@ -21,8 +21,9 @@ This `homekitMapping` has to be added to the mower so it can be controlled prope
 ```
 clear
 On=mowerStatusTxt,values=Home:0;;/.*/:1,cmds=0:stopMower;;1:startMower;;false:stopMower;;true:startMower
-BatteryLevel=batteryPercent
-ChargingState=batteryCharging
+BatteryService#BatteryLevel=batteryPercent
+BatteryService#ChargingState=batteryCharging
+BatteryService#StatusLowBattery=batteryPercent,threshold=20,values=0:BATTERY_LEVEL_LOW;;1:BATTERY_LEVEL_NORMAL
 ```
 
 To add other switches you can add more `On=...` lines, to add ContactSensors add a line like
